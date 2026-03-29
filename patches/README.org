@@ -1,0 +1,48 @@
+#+title: patches/
+
+* Purpose
+
+Source patch files for upstream or custom packages.
+
+When you need to modify the source code of a package (fix a bug, add a
+feature, backport a fix), place the =.patch= file here and reference it
+in your package definition.
+
+* Usage in Package Definitions
+
+#+begin_src scheme
+(define-public my-patched-package
+  (package
+    (inherit some-package)
+    (source
+     (origin
+       (inherit (package-source some-package))
+       (patches
+        (append
+         ;; Reference patches from this directory
+         (search-patches "my-fix.patch")
+         (origin-patches (package-source some-package))))))))
+#+end_src
+
+Make sure your Guix load path includes the =patches/= directory, or use
+absolute paths via =(forge config)=.
+
+* Creating a Patch
+
+#+begin_src sh
+# From a git repository of the upstream source:
+git diff > /path/to/forge/patches/fix-description.patch
+# Or:
+git format-patch -1 HEAD
+#+end_src
+
+* Naming Convention
+
+Use descriptive names with the package name as prefix:
+
+#+begin_example
+patches/
+├── emacs-fix-wayland-clipboard.patch
+├── pipewire-add-custom-module.patch
+└── hyprland-nvidia-workaround.patch
+#+end_example

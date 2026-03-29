@@ -1,0 +1,26 @@
+#+title: channels/
+
+* Purpose
+
+This directory holds channel-related assets:
+
+- *Signing keys* (=.pub= files) for verifying channel authenticity
+- *Per-channel configuration* overrides if needed
+
+The main channel definitions live in the top-level =channels.scm=.
+
+* Example
+
+Place a nonguix signing key here:
+
+#+begin_example
+channels/
+└── nonguix-signing-key.pub
+#+end_example
+
+Then reference it in =channels.scm= or your system configuration.
+
+* When to Add Files Here
+
+- When you add a new channel that requires a public signing key
+- When you need channel-specific helper files or pin files

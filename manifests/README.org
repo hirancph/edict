@@ -1,0 +1,45 @@
+#+title: manifests/
+
+* Purpose
+
+Ad-hoc package manifests for use with =guix shell -m=.
+
+These define temporary, project-specific or task-specific environments
+without installing packages into your profile permanently.
+
+* Usage
+
+#+begin_src sh
+# Enter a development environment
+guix shell -m manifests/dev-python.scm
+
+# Or use with guix environment
+guix shell -m manifests/multimedia.scm
+#+end_src
+
+* How to Create a Manifest
+
+#+begin_src scheme
+;; manifests/dev-python.scm
+(specifications->manifest
+ '("python"
+   "python-numpy"
+   "python-matplotlib"))
+#+end_src
+
+* Naming Convention
+
+Name manifests by their purpose:
+
+#+begin_example
+manifests/
+├── dev-python.scm       ;; Python development
+├── dev-guile.scm        ;; Guile/Scheme development
+├── multimedia.scm       ;; Audio/video tools
+└── office.scm           ;; Office and productivity
+#+end_example
+
+* When to Use Manifests vs Features
+
+- *Manifests*: Temporary/ad-hoc environments you enter explicitly
+- *Features*: Permanent parts of your system or home config

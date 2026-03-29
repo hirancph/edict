@@ -1,0 +1,35 @@
+#+title: files/
+
+* Purpose
+
+This directory holds static, non-Guile configuration files — things that
+*cannot* be expressed declaratively in Guile Scheme.
+
+Since the goal is a fully Guile-declarative configuration, this directory
+should be used *sparingly*. Prefer generating configs from Guile using
+=mixed-text-file=, =plain-file=, =computed-file=, etc.
+
+* What Belongs Here
+
+- Binary assets (images, wallpapers, icons)
+- Signing keys and certificates
+- Config files for applications that have no Guile integration and whose
+  config format is too complex to generate (rare)
+
+* What Does NOT Belong Here
+
+- Anything that can be generated from Guile — write a home service instead
+- Shell configs (use Guix Home's =home-bash-configuration= etc.)
+- Git config (use Guix Home's =home-git-configuration=)
+
+* Subdirectory Convention
+
+Organize by application:
+
+#+begin_example
+files/
+├── wallpapers/
+│   └── desktop.png
+└── keys/
+    └── nonguix-signing-key.pub
+#+end_example

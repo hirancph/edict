@@ -1,0 +1,58 @@
+#+title: home/services/
+
+* Purpose
+
+Custom Guix Home service type definitions.
+
+These are *your own* home service types — not upstream Guix ones. Use this
+when you need a home service that doesn't exist in Guix yet.
+
+* When to Create a Custom Home Service
+
+- When you want to declaratively manage a config file for an application
+  that Guix Home doesn't support yet
+- When you need a home-level daemon or activation script
+- When you want to generate config files from Guile data structures
+
+* Example
+
+#+begin_src scheme
+;; modules/forge/home/services/hyprland.scm
+(define-module (forge home services hyprland)
+  #:use-module (gnu home services)
+  #:use-module (gnu services configuration)
+  #:use-module (guix gexp)
+  #:export (home-hyprland-service-type
+            home-hyprland-configuration))
+
+;; Define a configuration record
+(define-configuration home-hyprland-configuration
+  (monitor
+   (string "DP-1, 1920x1080@144, 0x0, 1")
+   "Monitor configuration string."))
+
+;; Define the service type
+(define home-hyprland-service-type
+  (service-type
+   (name 'home-hyprland)
+   (extensions
+    (list (service-extension
+           home-files-service-type
+           (lambda (config)
+             (list `(".config/hypr/hyprland.conf"
+                     ,(mixed-text-file "hyprland.conf"
+                       "monitor = " (home-hyprland-configuration-monitor config) "\n")))))))
+   (description "Configure Hyprland declaratively from Guile.")))
+#+end_src
+
+* Naming Convention
+
+#+begin_example
+home/services/
+├── hyprland.scm        ;; Hyprland WM configuration
+├── waybar.scm          ;; Waybar status bar
+├── dunst.scm           ;; Notification daemon
+└── rofi.scm            ;; Application launcher
+#+end_example
+
+One file per application or concern.

@@ -1,0 +1,62 @@
+#+title: packages/
+
+* Purpose
+
+Custom or patched package definitions that are not available in upstream
+GNU Guix or nonguix channels.
+
+* When to Add a Package Here
+
+- The package isn't in any of your channels
+- You need a patched version of an existing package
+- You're packaging something for potential upstream submission
+- You need a different version than what's available
+
+* Example
+
+#+begin_src scheme
+;; modules/forge/packages/fonts.scm
+(define-module (forge packages fonts)
+  #:use-module (guix packages)
+  #:use-module (guix download)
+  #:use-module (guix build-system font)
+  #:use-module ((guix licenses) #:prefix license:))
+
+(define-public font-my-custom
+  (package
+    (name "font-my-custom")
+    (version "1.0")
+    (source (origin
+              (method url-fetch)
+              (uri "https://example.com/font.tar.gz")
+              (sha256 (base32 "..."))))
+    (build-system font-build-system)
+    (synopsis "My custom font")
+    (description "A custom font package.")
+    (home-page "https://example.com")
+    (license license:silofl1.1)))
+#+end_src
+
+* Naming Convention
+
+Group packages by category, mirroring upstream Guix naming:
+
+#+begin_example
+packages/
+├── emacs-xyz.scm       ;; Custom Emacs packages
+├── fonts.scm           ;; Custom fonts
+├── linux.scm           ;; Kernel modules, drivers
+├── wayland.scm         ;; Wayland-related packages
+└── wm.scm              ;; Window manager packages
+#+end_example
+
+* Applying Patches
+
+If a package needs a patch, place the patch file in =patches/= and
+reference it:
+
+#+begin_src scheme
+(source (origin
+          ...
+          (patches (list (search-patch "my-fix.patch")))))
+#+end_src

@@ -1,0 +1,48 @@
+#+title: home/
+
+* Purpose
+
+Home environment definitions and custom Guix Home services.
+
+This is where user-level (non-root) configurations live, as opposed to
+system-level configurations in =systems/=.
+
+* Structure
+
+#+begin_example
+home/
+├── README.org          ;; This file
+├── desktop.scm         ;; Home environment for the desktop machine
+└── services/           ;; Custom home service type definitions
+    └── README.org
+#+end_example
+
+* What Goes Here
+
+- =home-environment= definitions that compose features into a complete
+  user environment for a specific host
+- Host-specific home configurations (one =.scm= per host)
+
+* Example
+
+#+begin_src scheme
+;; modules/forge/home/desktop.scm
+(define-module (forge home desktop)
+  #:use-module (gnu home)
+  #:use-module (forge config)
+  #:use-module (forge features shells)
+  #:use-module (forge features desktop))
+
+(home-environment
+  (packages (append %desktop-packages %shell-packages))
+  (services (append %desktop-home-services %shell-services)))
+#+end_src
+
+* Home vs System
+
+| Concern | Where |
+|---------+-------|
+| User packages & dotfiles | =home/= |
+| Desktop environment | =home/= |
+| Kernel, bootloader, filesystems | =systems/= |
+| System daemons | =systems/= or =services/= |

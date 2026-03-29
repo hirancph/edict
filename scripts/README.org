@@ -1,0 +1,59 @@
+#+title: scripts/
+
+* Purpose
+
+Helper shell scripts for bootstrapping, maintenance, and tasks that are
+easier as shell scripts than Guile.
+
+* What Belongs Here
+
+- *Bootstrap/setup scripts*: First-time setup on a fresh install
+- *ISO build scripts*: Generate installation media
+- *Maintenance scripts*: Backup, migration helpers
+- *Wrapper scripts*: Shortcuts for complex guix commands
+
+* Example Scripts
+
+** =setup= — First-time bootstrap
+
+#+begin_src sh
+#!/bin/sh
+# Bootstrap the system on a fresh install
+# 1. Copy channels.scm
+# 2. Run guix pull
+# 3. Reconfigure system and home
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+echo "Setting up Guix configuration from: $SCRIPT_DIR"
+
+# Ensure channels are in place
+mkdir -p ~/.config/guix
+ln -sf "$SCRIPT_DIR/channels.scm" ~/.config/guix/channels.scm
+
+echo "Pulling channels..."
+guix pull
+
+echo "Done. Run 'make system' and 'make home' to reconfigure."
+#+end_src
+
+** =guix-wrapper= — Bootstrap guix with correct module path
+
+#+begin_src sh
+#!/bin/sh
+# Run guix with the correct module load path
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+exec guix -L "$SCRIPT_DIR/modules" "$@"
+#+end_src
+
+* Naming Convention
+
+#+begin_example
+scripts/
+├── setup             ;; First-time bootstrap
+├── build-iso         ;; Build installation ISO
+├── backup            ;; Backup current generations
+└── guix-wrapper      ;; Run guix with correct -L path
+#+end_example

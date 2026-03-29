@@ -1,0 +1,61 @@
+#+title: features/
+
+* Purpose
+
+Composable feature units that bundle packages, services, and configuration
+into logical, reusable groups.
+
+Features are the primary way to organize your configuration. Each feature
+is a self-contained module that can be independently included or excluded
+from your system or home environment.
+
+* Design Pattern
+
+Each feature module should:
+
+1. Define a Guile module: =(define-module (forge features foo) ...)=
+2. Export one or more feature definitions
+3. Bundle together the packages, services, and settings for that concern
+
+* Example
+
+#+begin_src scheme
+;; modules/forge/features/desktop.scm
+(define-module (forge features desktop)
+  #:use-module (gnu packages gnome)
+  #:use-module (gnu services desktop)
+  #:export (%desktop-packages
+            %desktop-services))
+
+(define %desktop-packages
+  (list adwaita-icon-theme gnome-themes-extra))
+
+(define %desktop-services
+  (list (service gnome-desktop-service-type)))
+#+end_src
+
+* Naming Convention
+
+Name features by their functional concern:
+
+#+begin_example
+features/
+├── audio.scm            ;; PipeWire, PulseAudio, audio tools
+├── desktop.scm          ;; Desktop environment base
+├── development.scm      ;; Dev tools, compilers, REPLs
+├── fonts.scm            ;; Font configuration
+├── gpu.scm              ;; GPU drivers (NVIDIA, AMD, etc.)
+├── networking.scm       ;; Network manager, firewall, VPN
+├── shells.scm           ;; Shell configuration (bash, zsh)
+├── theming.scm          ;; GTK/Qt themes, icons, cursors
+├── version-control.scm  ;; Git, credentials, signing
+└── wayland.scm          ;; Wayland compositor (Hyprland, etc.)
+#+end_example
+
+* Features vs Packages vs Services
+
+- *Features*: High-level compositions — "I want audio support"
+- *Packages*: Low-level package definitions — "Here's how to build foo"
+- *Services*: Low-level service types — "Here's a daemon definition"
+
+Features *use* packages and services. They are the glue layer.

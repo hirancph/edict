@@ -1,0 +1,54 @@
+#+title: services/
+
+* Purpose
+
+Custom system-level service type definitions.
+
+These are services that run as root or system daemons — as opposed to
+user-level services in =home/services/=.
+
+* When to Create a Custom System Service
+
+- When you need a system daemon that Guix doesn't provide
+- When you need custom udev rules
+- When you want to wrap an existing service with extra configuration
+- When you need system-level activation scripts
+
+* Example
+
+#+begin_src scheme
+;; modules/forge/services/hardware.scm
+(define-module (forge services hardware)
+  #:use-module (gnu services)
+  #:use-module (gnu services shepherd)
+  #:use-module (guix gexp)
+  #:export (my-hardware-service-type))
+
+(define my-hardware-service-type
+  (service-type
+   (name 'my-hardware)
+   (extensions
+    (list (service-extension
+           udev-service-type
+           (lambda (config)
+             ;; Add custom udev rules here
+             (list)))))
+   (description "Custom hardware support service.")))
+#+end_src
+
+* System Services vs Home Services
+
+| Aspect | System Service (=services/=) | Home Service (=home/services/=) |
+|--------+------------------------------+---------------------------------|
+| Runs as | root | user |
+| Managed by | =guix system reconfigure= | =guix home reconfigure= |
+| Use for | Daemons, kernel, udev | Dotfiles, user apps |
+
+* Naming Convention
+
+#+begin_example
+services/
+├── hardware.scm        ;; Hardware-specific services (udev rules, etc.)
+├── networking.scm       ;; Custom network services
+└── virtualization.scm   ;; VM/container services
+#+end_example

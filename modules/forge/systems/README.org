@@ -1,0 +1,65 @@
+#+title: systems/
+
+* Purpose
+
+Per-host =operating-system= configurations.
+
+Each file defines a complete system configuration for a specific machine.
+Currently there is only one desktop, but this structure supports adding
+laptops, servers, or VMs in the future.
+
+* What Goes Here
+
+- =operating-system= definitions: kernel, bootloader, file systems, hostname,
+  users, system packages, and system services
+- One file per host machine
+
+* Example
+
+#+begin_src scheme
+;; modules/forge/systems/desktop.scm
+(define-module (forge systems desktop)
+  #:use-module (gnu)
+  #:use-module (gnu system)
+  #:use-module (forge config)
+  #:use-module (forge features desktop)
+  #:use-module (forge features networking))
+
+(operating-system
+  (host-name "desktop")
+  (timezone %timezone)
+  (locale %locale)
+  (bootloader (bootloader-configuration
+               (bootloader grub-efi-bootloader)
+               (targets '("/boot/efi"))))
+  (file-systems (cons (file-system
+                        (device (uuid "..."))
+                        (mount-point "/")
+                        (type "ext4"))
+                      %base-file-systems))
+  (users (cons (user-account
+                (name %user-name)
+                (group "users")
+                (supplementary-groups '("wheel" "audio" "video" "netdev")))
+               %base-user-accounts))
+  (packages (append %desktop-packages %base-packages))
+  (services (append %desktop-services %base-services)))
+#+end_src
+
+* Naming Convention
+
+#+begin_example
+systems/
+├── desktop.scm          ;; Main desktop workstation
+├── laptop.scm           ;; (future) Laptop
+├── server.scm           ;; (future) Home server
+└── install.scm          ;; (future) Installation ISO
+#+end_example
+
+* Reconfiguring
+
+#+begin_src sh
+sudo guix system reconfigure -L modules/ modules/forge/systems/desktop.scm
+# Or use the Makefile:
+sudo make system HOST=desktop
+#+end_src
