@@ -11,7 +11,7 @@ GUIX_CONFIG_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 MODULES_DIR := $(GUIX_CONFIG_DIR)/modules
 
 # Default host system config — change this or override with: make system HOST=laptop
-HOST ?= desktop
+HOST ?= vessel
 
 export GUIX_PACKAGE_PATH := $(MODULES_DIR)
 

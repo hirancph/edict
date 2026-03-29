@@ -5,8 +5,8 @@
 Per-host =operating-system= configurations.
 
 Each file defines a complete system configuration for a specific machine.
-Currently there is only one desktop, but this structure supports adding
-laptops, servers, or VMs in the future.
+Currently there is only one host (vessel), but this structure supports
+adding laptops, servers, or VMs in the future.
 
 * What Goes Here
 
@@ -17,8 +17,8 @@ laptops, servers, or VMs in the future.
 * Example
 
 #+begin_src scheme
-;; modules/edict/systems/desktop.scm
-(define-module (edict systems desktop)
+;; modules/edict/systems/vessel.scm
+(define-module (edict systems vessel)
   #:use-module (gnu)
   #:use-module (gnu system)
   #:use-module (edict config)
@@ -50,7 +50,7 @@ laptops, servers, or VMs in the future.
 
 #+begin_example
 systems/
-├── desktop.scm          ;; Main desktop workstation
+├── vessel.scm           ;; Main desktop workstation
 ├── laptop.scm           ;; (future) Laptop
 ├── server.scm           ;; (future) Home server
 └── install.scm          ;; (future) Installation ISO
@@ -59,7 +59,7 @@ systems/
 * Reconfiguring
 
 #+begin_src sh
-sudo guix system reconfigure -L modules/ modules/edict/systems/desktop.scm
+sudo guix system reconfigure -L modules/ modules/edict/systems/vessel.scm
 # Or use the Makefile:
-sudo make system HOST=desktop
+sudo make system HOST=vessel
 #+end_src

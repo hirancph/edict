@@ -12,7 +12,7 @@ system-level configurations in =systems/=.
 #+begin_example
 home/
 ├── README.org          ;; This file
-├── desktop.scm         ;; Home environment for the desktop machine
+├── vessel.scm          ;; Home environment for vessel
 └── services/           ;; Custom home service type definitions
     └── README.org
 #+end_example
@@ -26,8 +26,8 @@ home/
 * Example
 
 #+begin_src scheme
-;; modules/edict/home/desktop.scm
-(define-module (edict home desktop)
+;; modules/edict/home/vessel.scm
+(define-module (edict home vessel)
   #:use-module (gnu home)
   #:use-module (edict config)
   #:use-module (edict features shells)
