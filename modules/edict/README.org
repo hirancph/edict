@@ -1,0 +1,33 @@
+#+title: edict/
+
+* Purpose
+
+This is your main Guile namespace: `(edict ...)`.
+
+Every `.scm` file inside this directory and its subdirectories is a Guile module
+that belongs to the `edict` project.
+
+* Structure
+
+#+begin_example
+modules/edict/
+├── README.org       ;; This file
+├── config.scm       ;; Global configuration variables `(edict config)`
+├── utils.scm        ;; Shared helper procedures `(edict utils)`
+├── features/        ;; Composable feature modules `(edict features ...)`
+├── home/            ;; Home configurations `(edict home ...)`
+├── packages/        ;; Custom package definitions `(edict packages ...)`
+├── services/        ;; Custom system services `(edict services ...)`
+└── systems/         ;; Host OS configurations `(edict systems ...)`
+#+end_example
+
+* Core Files
+
+** `config.scm`
+Defines global constants like your username, timezone, locale, and paths.
+By keeping these in one file, any other module can simply import `(edict config)`
+to get your username instead of hard-coding it.
+
+** `utils.scm`
+Provides general-purpose helper functions used across the codebase, such as
+the `pkgs` macro to turn strings into package objects, avoiding repetitive typing.
