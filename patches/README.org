@@ -25,13 +25,13 @@ in your package definition.
 #+end_src
 
 Make sure your Guix load path includes the =patches/= directory, or use
-absolute paths via =(forge config)=.
+absolute paths via =(edict config)=.
 
 * Creating a Patch
 
 #+begin_src sh
 # From a git repository of the upstream source:
-git diff > /path/to/forge/patches/fix-description.patch
+git diff > /path/to/edict/patches/fix-description.patch
 # Or:
 git format-patch -1 HEAD
 #+end_src

@@ -15,8 +15,8 @@ GNU Guix or nonguix channels.
 * Example
 
 #+begin_src scheme
-;; modules/forge/packages/fonts.scm
-(define-module (forge packages fonts)
+;; modules/edict/packages/fonts.scm
+(define-module (edict packages fonts)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system font)

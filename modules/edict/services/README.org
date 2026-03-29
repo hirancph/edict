@@ -17,8 +17,8 @@ user-level services in =home/services/=.
 * Example
 
 #+begin_src scheme
-;; modules/forge/services/hardware.scm
-(define-module (forge services hardware)
+;; modules/edict/services/hardware.scm
+(define-module (edict services hardware)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (guix gexp)

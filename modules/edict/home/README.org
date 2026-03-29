@@ -26,12 +26,12 @@ home/
 * Example
 
 #+begin_src scheme
-;; modules/forge/home/desktop.scm
-(define-module (forge home desktop)
+;; modules/edict/home/desktop.scm
+(define-module (edict home desktop)
   #:use-module (gnu home)
-  #:use-module (forge config)
-  #:use-module (forge features shells)
-  #:use-module (forge features desktop))
+  #:use-module (edict config)
+  #:use-module (edict features shells)
+  #:use-module (edict features desktop))
 
 (home-environment
   (packages (append %desktop-packages %shell-packages))

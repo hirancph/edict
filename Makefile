@@ -1,4 +1,4 @@
-# forge Makefile — Convenience targets for system management
+# edict Makefile — Convenience targets for system management
 #
 # Usage:
 #   make pull       — Update Guix channels
@@ -25,13 +25,13 @@ pull:
 system:
 	sudo -E guix system reconfigure \
 		-L $(MODULES_DIR) \
-		$(MODULES_DIR)/forge/systems/$(HOST).scm
+		$(MODULES_DIR)/edict/systems/$(HOST).scm
 
 ## Reconfigure the home environment
 home:
 	guix home reconfigure \
 		-L $(MODULES_DIR) \
-		$(MODULES_DIR)/forge/home/$(HOST).scm
+		$(MODULES_DIR)/edict/home/$(HOST).scm
 
 ## Garbage collect old generations
 gc:
@@ -40,7 +40,7 @@ gc:
 ## Lint custom packages
 check:
 	@echo "Linting custom packages..."
-	@for f in $(MODULES_DIR)/forge/packages/*.scm; do \
+	@for f in $(MODULES_DIR)/edict/packages/*.scm; do \
 		echo "  $$f"; \
 	done
 	@echo "Done. (Add guix lint commands as packages are created)"

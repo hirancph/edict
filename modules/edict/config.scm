@@ -4,7 +4,7 @@
 ;;; All system-wide settings that might vary per-user or per-host
 ;;; should be defined here so they can be imported anywhere.
 
-(define-module (forge config)
+(define-module (edict config)
   #:use-module (guix utils)
   #:export (%config-dir
             %modules-dir
@@ -16,7 +16,7 @@
 ;; ——— Paths ———
 
 ;; Automatically resolves to the repository root based on this file's location.
-;; (forge config) => .../modules/forge/config.scm => ../../ => repo root
+;; (edict config) => .../modules/edict/config.scm => ../../ => repo root
 (define %config-dir
   (dirname (dirname (current-source-directory))))
 

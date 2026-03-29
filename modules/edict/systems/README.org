@@ -17,16 +17,16 @@ laptops, servers, or VMs in the future.
 * Example
 
 #+begin_src scheme
-;; modules/forge/systems/desktop.scm
-(define-module (forge systems desktop)
+;; modules/edict/systems/desktop.scm
+(define-module (edict systems desktop)
   #:use-module (gnu)
   #:use-module (gnu system)
-  #:use-module (forge config)
-  #:use-module (forge features desktop)
-  #:use-module (forge features networking))
+  #:use-module (edict config)
+  #:use-module (edict features desktop)
+  #:use-module (edict features networking))
 
 (operating-system
-  (host-name "desktop")
+  (host-name "vessel")
   (timezone %timezone)
   (locale %locale)
   (bootloader (bootloader-configuration
@@ -59,7 +59,7 @@ systems/
 * Reconfiguring
 
 #+begin_src sh
-sudo guix system reconfigure -L modules/ modules/forge/systems/desktop.scm
+sudo guix system reconfigure -L modules/ modules/edict/systems/desktop.scm
 # Or use the Makefile:
 sudo make system HOST=desktop
 #+end_src

@@ -13,15 +13,15 @@ from your system or home environment.
 
 Each feature module should:
 
-1. Define a Guile module: =(define-module (forge features foo) ...)=
+1. Define a Guile module: =(define-module (edict features foo) ...)=
 2. Export one or more feature definitions
 3. Bundle together the packages, services, and settings for that concern
 
 * Example
 
 #+begin_src scheme
-;; modules/forge/features/desktop.scm
-(define-module (forge features desktop)
+;; modules/edict/features/desktop.scm
+(define-module (edict features desktop)
   #:use-module (gnu packages gnome)
   #:use-module (gnu services desktop)
   #:export (%desktop-packages

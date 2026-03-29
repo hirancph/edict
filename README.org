@@ -1,4 +1,4 @@
-#+title: forge
+#+title: edict
 #+author: hirancph
 
 * Overview
@@ -13,11 +13,11 @@ entirely in GNU Guile.
 | =channels/=      | Channel signing keys and per-channel configuration     |
 | =files/=         | Static assets that cannot be expressed in Guile        |
 | =manifests/=     | Ad-hoc package manifests for =guix shell -m=             |
-| =modules/forge/= | Guile module tree — the heart of the configuration     |
+| =modules/edict/= | Guile module tree — the heart of the configuration     |
 | =patches/=       | Source patches for upstream or custom packages         |
 | =scripts/=       | Helper shell scripts for bootstrapping and maintenance |
 
-** Guile Modules (=modules/forge/=)
+** Guile Modules (=modules/edict/=)
 
 | Module Path    | Purpose                                          |
 |----------------+--------------------------------------------------|
@@ -45,20 +45,20 @@ make home
 
 * Adding a New Feature
 
-1. Create a new file in =modules/forge/features/=
-2. Define your feature as a Guile module: =(define-module (forge features your-feature) ...)=
+1. Create a new file in =modules/edict/features/=
+2. Define your feature as a Guile module: =(define-module (edict features your-feature) ...)=
 3. Bundle packages, services, and configuration within it
 4. Import and compose it in your system or home configuration
 
 * Adding a Custom Package
 
-1. Create a new file in =modules/forge/packages/=
-2. Define the module: =(define-module (forge packages your-package) ...)=
-3. Use it anywhere via =(use-modules (forge packages your-package))=
+1. Create a new file in =modules/edict/packages/=
+2. Define the module: =(define-module (edict packages your-package) ...)=
+3. Use it anywhere via =(use-modules (edict packages your-package))=
 
 * Adding a New Host
 
-1. Create a new file in =modules/forge/systems/= (e.g., =laptop.scm=)
+1. Create a new file in =modules/edict/systems/= (e.g., =laptop.scm=)
 2. Define the =operating-system= for that host
 3. Add a Makefile target or reconfigure command for it
 

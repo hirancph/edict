@@ -17,8 +17,8 @@ when you need a home service that doesn't exist in Guix yet.
 * Example
 
 #+begin_src scheme
-;; modules/forge/home/services/hyprland.scm
-(define-module (forge home services hyprland)
+;; modules/edict/home/services/hyprland.scm
+(define-module (edict home services hyprland)
   #:use-module (gnu home services)
   #:use-module (gnu services configuration)
   #:use-module (guix gexp)

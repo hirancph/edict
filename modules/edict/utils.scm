@@ -3,7 +3,7 @@
 ;;; Shared utility procedures used across the configuration.
 ;;; Place helpers here that are used by multiple modules to avoid duplication.
 
-(define-module (forge utils)
+(define-module (edict utils)
   #:use-module (gnu packages)
   #:use-module (srfi srfi-1)
   #:export (pkgs
