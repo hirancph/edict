@@ -15,7 +15,7 @@ HOST ?= vessel
 
 export GUIX_PACKAGE_PATH := $(MODULES_DIR)
 
-.PHONY: pull system home gc check repl
+.PHONY: pull system home deploy gc check repl
 
 ## Pull latest channel updates
 pull:
@@ -32,6 +32,9 @@ home:
 	guix home reconfigure \
 		-L $(MODULES_DIR) \
 		$(MODULES_DIR)/edict/home/$(HOST).scm
+
+## Reconfigure both system and home
+deploy: system home
 
 ## Garbage collect old generations
 gc:
