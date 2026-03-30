@@ -1,0 +1,69 @@
+#+title: Line-by-Line Guide: ssh.scm (Feature)
+#+author: hirancph
+
+* What is this file?
+
+This is the =ssh= feature. It installs and configures the OpenSSH Daemon (server), allowing you to securely log into this computer remotely from another machine.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict features ssh)
+  #:use-module (gnu services)
+  #:use-module (gnu services ssh)
+  #:use-module (gnu packages ssh)
+  #:use-module (edict features)
+  #:export (ssh-feature))
+#+end_src
+Imports the GNU SSH services and packages, and exports the =ssh-feature= constructor.
+
+** The Constructor
+
+#+begin_src scheme
+(define* (ssh-feature #:key
+                      (port 2222)
+                      (permit-root-login? #f)
+                      (password-auth? #t))
+#+end_src
+By default, the SSH feature does a few things for your security:
+- It changes the default SSH port from =22= to =2222=. This is a very common security practice to stop automated hacker bots on the internet from endlessly guessing passwords on port 22.
+- It completely bans the =root= administrator account from logging in via SSH (=(permit-root-login? #f)=).
+- It permits password authentication (so you can just type a password instead of needing an intricate SSH Key set up).
+
+** Scope and Values
+
+#+begin_src scheme
+  ;; ── Validation ──
+  (ensure-pred integer? port)
+  (ensure-pred boolean? permit-root-login?)
+  (ensure-pred boolean? password-auth?)
+
+  (edict-feature
+   #:name 'ssh
+   #:provides '(ssh)
+   #:requires '(networking)
+   #:scope 'system
+   #:values `((ssh-port . ,port))
+#+end_src
+- =#:requires '(networking)=: An SSH server is completely useless without an internet connection, so it forces Edict to load the networking feature before it configures SSH.
+- =#:scope 'system=: SSH is a system-wide background daemon, so it is strictly a =system= scoped feature.
+- =#:values `((ssh-port . ,port))=: It publishes the port it is running on. Why? Imagine you write a Firewall feature later on. The Firewall feature could ask the global value store, "Hey, what port is SSH running on?" and automatically open Port =2222= to the internet.
+
+** The Payload (Extensions)
+
+#+begin_src scheme
+   #:extensions
+   (list
+    (contribute system-services-target
+     (service openssh-service-type
+              (openssh-configuration
+               (openssh openssh-sans-x)
+               (port-number port)
+               (permit-root-login (if permit-root-login? 'yes #f))
+               (allow-empty-passwords? #f)
+               (password-authentication? password-auth?)))))))
+#+end_src
+This drops the actual =openssh-service-type= into your system services.
+- =(openssh openssh-sans-x)=: This specifies the exact package to use. =openssh-sans-x= is a lighter version of the SSH server that removes X11 Forwarding support (which is a massive security risk and very rarely used for modern graphical apps).
+- =(permit-root-login (if permit-root-login? 'yes #f))=: The upstream Guix developers are a bit funny. For =permit-root-login=, they don't accept =#t= (true) or =#f= (false). They accept the symbol ='yes= or =#f=. So we use an =if= statement to convert our beautiful boolean into their expected input.
+- =(allow-empty-passwords? #f)=: Explicitly and permanently bans accounts with zero-character passwords from logging in remotely, no matter what keyword arguments were passed to the feature.

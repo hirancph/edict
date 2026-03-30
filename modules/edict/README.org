@@ -20,8 +20,8 @@ Right below it, you will see things like:
   #:use-module (gnu)
   #:export (my-thing)
 #+end_src
-- `#:use-module` means "I need to borrow tools from another file to do my work".
-- `#:export` means "I am making this specific tool available so *other* files can borrow it from me".
+- =#:use-module= means "I need to borrow tools from another file to do my work".
+- =#:export= means "I am making this specific tool available so *other* files can borrow it from me".
 
 * Structure
 

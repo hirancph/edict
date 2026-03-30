@@ -11,11 +11,11 @@ system-level configurations in =systems/=.
 
 Guix is unique because it completely separates your Operating System from your User Profile.
 
-**System (`sudo make system`)**: 
+**System (=sudo make system=)**: 
 Controls hardware, kernel, drivers, networking, and system-wide services. If you break this, your computer might not boot.
 
-**Home (`make home`)**: 
-Controls your personal user account. This includes your dotfiles, your window manager theme, your custom bash prompt, and applications that only *you* use (like Discord or Emacs). You do not need `sudo` for this. Since it only affects your user account, it is impossible to break the whole computer.
+**Home (=make home=)**: 
+Controls your personal user account. This includes your dotfiles, your window manager theme, your custom bash prompt, and applications that only *you* use (like Discord or Emacs). You do not need =sudo= for this. Since it only affects your user account, it is impossible to break the whole computer.
 
 * Structure
 

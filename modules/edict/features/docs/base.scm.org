@@ -1,0 +1,109 @@
+#+title: Line-by-Line Guide: base.scm (Feature)
+#+author: hirancph
+
+* What is this file?
+
+This is the =base= feature. It provides the absolute minimum tools and configuration that *every single Edict-powered computer* should have installed. It includes common CLI programs (like vim), Windows filesystem support (exFAT/NTFS), and it automatically cleans up Guix's storage every night (Garbage Collection).
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict features base)
+  #:use-module (gnu services)
+  #:use-module (gnu services base)
+  ;; ... other imports ...
+  #:use-module (guix gexp)
+  #:use-module (edict features)
+  #:export (base-feature))
+#+end_src
+This is the standard module header. We are importing all the upstream Guix packages and services we need (like =mcron= for cron jobs, =vim= for the text editor, etc.). We export the =base-feature= command.
+
+** The Feature Constructor
+#+begin_src scheme
+(define* (base-feature #:key
+                       (gc-days 30)
+                       (gc-free "5G")
+                       (extra-packages '())
+                       (extra-user-groups '()))
+#+end_src
+This defines the feature. It accepts four optional arguments (=#:key=). 
+- If you don't supply =gc-days=, it defaults to =30=.
+- If you don't supply =extra-packages=, it defaults to ='()= (which is an empty list).
+
+** The Validation Block
+#+begin_src scheme
+  ;; ── Validation ──
+  (ensure-pred integer? gc-days)
+  (ensure-pred string? gc-free)
+  (ensure-pred list? extra-packages)
+  (ensure-pred list? extra-user-groups)
+#+end_src
+Before doing any work, this feature strictly checks the types of the user's inputs. If someone typed =(base-feature #:gc-days "fifteen")=, the system instantly throws a clean error: "gc-days does not satisfy integer?". This is incredibly useful for debugging.
+
+** The Feature Object
+#+begin_src scheme
+  (edict-feature
+   #:name 'base
+   #:provides '(base)
+   #:requires '()
+#+end_src
+We give the feature a label (='base=), we declare that it /provides/ the symbol ='base= to the rest of the system, and it requires nothing (='()=).
+
+#+begin_src scheme
+   #:values `((gc-days . ,gc-days)
+              (gc-free . ,gc-free))
+#+end_src
+This publishes the =gc-days= and =gc-free= settings to the system's global Value Store so other features can read them if they want.
+(See the Scheme Crash Course for an explanation of quasiquoting: `` `((a . ,b)) ``).
+
+** The Payload (Extensions)
+#+begin_src scheme
+   #:extensions
+   (list
+#+end_src
+We are starting to build the list of tools we are throwing into the targets (buckets).
+
+#+begin_src scheme
+    (apply contribute user-groups-target
+           (append '("wheel" "kvm") extra-user-groups))
+#+end_src
+- =apply contribute=: This is a small Scheme trick. Since =contribute= takes a varying number of arguments, and we want to pass it a *list*, we use =apply=.
+- =append=: We are joining the "wheel" (admin) and "kvm" (virtualization) user groups together with whatever =extra-user-groups= the user asked for. We throw this combined list into the =user-groups-target= bucket.
+
+#+begin_src scheme
+    (apply contribute system-packages-target
+           (append (list git vim nss-certs ntfs-3g exfat-utils fuse-exfat)
+                   extra-packages))
+#+end_src
+Similarly, we are creating a list of core packages (git, vim) + hardware support packages (ntfs-3g, exfat-utils) and appending any =extra-packages= the user requested. This huge list of software is thrown into the =system-packages-target= bucket.
+
+#+begin_src scheme
+    (contribute system-services-target
+     (service special-files-service-type
+              `(("/bin/bash"    ,(file-append bash "/bin/bash"))
+                ("/usr/bin/env" ,(file-append coreutils "/bin/env"))))
+#+end_src
+Guix does not follow the standard Linux filesystem hierarchy (it doesn't have a normal =/bin= directory). This service creates "fake" symlinks for =/bin/bash= and =/usr/bin/env= so that non-Guix programs (like typical shell scripts you download from the internet) don't crash when they can't find Bash.
+
+#+begin_src scheme
+     (simple-service 'ntfs-mount-rules udev-service-type (list ntfs-3g))
+#+end_src
+This allows standard user accounts (not just root) to plug in and mount USB drives formatted with Windows NTFS.
+
+** The Cron Job (G-Expressions)
+#+begin_src scheme
+     (simple-service 'system-cron-jobs
+                     mcron-service-type
+                     (list
+                      #~(job "5 0 * * *"
+                             (string-append
+                              "guix gc -d "
+                              #$(number->string gc-days)
+                              "d -F "
+                              #$gc-free))))))))
+#+end_src
+This sets up a scheduled task (a cron job) using =mcron= to automatically run the Guix Garbage Collector at 12:05 AM every day.
+
+- **What is `#~`?**: This is called a **G-Expression** (Gexp). It's a special Guix feature that creates a "script" that will run *later* on the finished computer, rather than *right now* in your configuration file.
+- **What is `#$`?**: It's like unquoting (=,=). It means: "Take the value of this variable right now and inject it into the script".
+So if =gc-days= is =30=, the script sent to the actual computer will read: ="guix gc -d 30d -F 5G"=.

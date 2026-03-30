@@ -1,0 +1,111 @@
+#+title: Line-by-Line Guide: build.scm
+#+author: hirancph
+
+* What is this file?
+
+This file contains the **Builders**. 
+A builder's job is to take your composed Lego blocks (features) and automatically write the massive, complex Guix configuration block that the operating system requires.
+
+It defines two **Macros**: =edict-operating-system= and =edict-home-environment=.
+A macro is a special kind of function in Scheme that writes code for you before the program even runs.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict build)
+  #:use-module (gnu)
+  #:use-module (gnu system)
+  #:use-module (gnu system nss)
+  #:use-module (gnu home)
+  #:use-module (gnu home services)
+  #:use-module (srfi srfi-1)
+  #:use-module (edict config)
+  #:use-module (edict features)
+  #:export (edict-operating-system
+            edict-home-environment))
+#+end_src
+This is the standard module definition. We are importing massive chunks of the upstream Guix OS framework (=(gnu system)=, =(gnu home)=) because we are about to generate data structures that belong to those namespaces. We also export our two macros.
+
+** The Operating System Macro
+
+#+begin_src scheme
+(define-syntax edict-operating-system
+  (syntax-rules ()
+#+end_src
+- =define-syntax=: This is how you create a Macro in Scheme. Instead of =define= (which makes variables) or =define (foo)= (which makes functions), =define-syntax= means "I am creating a code-writing rule".
+- =syntax-rules ()= : This tells Guile we are going to define pattern-matching rules for our macro.
+
+#+begin_src scheme
+    ((_ composed-expr field ...)
+#+end_src
+This is the **Pattern**. 
+- =_= represents the name of the macro itself (=edict-operating-system=). 
+- =composed-expr= is the first argument the user provides (which will be their composed features, like =%vessel=).
+- =field ...= means "capture any remaining arguments the user types, and save them as a list called =field=".
+
+#+begin_src scheme
+     (let* ((composed composed-expr)
+            (kern (get-value 'kernel composed #f))
+            (fw   (get-value 'firmware composed #f))
+            (ird  (get-value 'initrd composed #f))
+            (extra-accounts (get-extensions composed user-accounts-target)))
+#+end_src
+- =let*= : This creates temporary variables that we can use below.
+- =get-value=: We are asking the composed features block: "Hey, did any feature publish a value called =kernel=?" The =#f= at the end means "If you don't find it, just return false instead of crashing."
+- =get-extensions=: We are scooping out everything inside the =user-accounts-target= bucket.
+
+#+begin_src scheme
+       (operating-system
+         (kernel (or kern linux))
+         (firmware (or fw '()))
+         (initrd (or ird (@ (gnu system linux-initrd) base-initrd)))
+#+end_src
+Here, the macro starts actually writing the code that Guix wants. It starts with =(operating-system ...)=.
+- =(or kern linux)=: This means "Use the kernel provided by a feature (=kern=). If =kern= is false, fall back to the default free-software =linux= kernel."
+
+#+begin_src scheme
+         (kernel-arguments
+          (append (get-extensions composed kernel-arguments-target)
+                  %default-kernel-arguments))
+#+end_src
+- =append=: Joins lists together. It takes anything inside the =kernel-arguments-target= bucket, and glues it onto the default kernel arguments Guix provides, handing the final list to the Operating System.
+
+#+begin_src scheme
+         (users
+          (append
+           (list (user-account
+                  (name %user-name)
+                  (comment %full-name)
+                  (group "users")
+                  (home-directory (string-append "/home/" %user-name))
+                  (supplementary-groups
+                   (delete-duplicates
+                    (get-extensions composed user-groups-target)
+                    string=?))))
+           extra-accounts
+           %base-user-accounts))
+#+end_src
+This creates your main user account automatically! 
+- It uses =%user-name= and =%full-name= that you set in =config.scm=.
+- It scoops out everything in the =user-groups-target= bucket (like "video", "audio", "wheel") and assigns those groups to you.
+- It removes duplicates (in case two features both asked for you to be in the "video" group).
+
+#+begin_src scheme
+         ;; Machine-specific overrides come last and win:
+         field ...)))))
+#+end_src
+Finally, it injects the hardware-specific =field ...= that the user originally typed (like =host-name= and =file-systems=) at the very bottom of the OS configuration.
+
+** The Home Environment Macro
+
+#+begin_src scheme
+(define-syntax edict-home-environment
+  (syntax-rules ()
+    ((_ composed-expr field ...)
+     (let ((composed composed-expr))
+       (home-environment
+         (packages (get-extensions composed home-packages-target))
+         (services (get-extensions composed home-services-target))
+         field ...)))))
+#+end_src
+This does the exact same thing, but for your user profile (`guix home`). It creates a =home-environment=, scoops out the packages and services from the home buckets, and injects any trailing fields the user provided.

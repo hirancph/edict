@@ -1,0 +1,90 @@
+#+title: Line-by-Line Guide: networking.scm (Feature)
+#+author: hirancph
+
+* What is this file?
+
+This is the =networking= feature. It manages Wi-Fi (NetworkManager), Bluetooth, mDNS (Avahi, which lets you find printers and other computers on your local network using =.local= addresses), and NTP (automatic clock synchronization).
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict features networking)
+  #:use-module (gnu services)
+  #:use-module (gnu services avahi)
+  #:use-module (gnu services desktop)
+  #:use-module (gnu services networking)
+  #:use-module (edict features)
+  #:export (networking-feature))
+#+end_src
+Standard imports for networking services.
+
+** The Feature Constructor
+#+begin_src scheme
+(define* (networking-feature #:key
+                             (bluetooth? #t)
+                             (auto-enable-bluetooth? #t)
+                             (ntp? #t)
+                             (avahi? #t))
+#+end_src
+This constructor takes 4 optional boolean (True/False) keyword arguments. By default, everything is turned on. If you ever install this on a server and don't want Bluetooth, you could use =(networking-feature #:bluetooth? #f)=.
+
+** Validation
+#+begin_src scheme
+  ;; ── Validation ──
+  (ensure-pred boolean? bluetooth?)
+  (ensure-pred boolean? auto-enable-bluetooth?)
+  (ensure-pred boolean? ntp?)
+  (ensure-pred boolean? avahi?)
+#+end_src
+Ensures the user didn't accidentally pass a string or a number to these switches.
+
+** The Feature Object
+#+begin_src scheme
+  (edict-feature
+   #:name 'networking
+   #:provides '(networking)
+   #:requires '(base)
+   #:values `((has-bluetooth? . ,bluetooth?)
+              (has-avahi? . ,avahi?))
+#+end_src
+- It requires =base=.
+- It publishes =has-bluetooth?= and =has-avahi?= to the global value store. This lets the desktop environment know if it should install Bluetooth-control applets. Notice we use quasiquoting (`` ` ``) and unquoting (=,=) here so that the actual true/false value chosen by the user in the constructor is passed to the engine, not the literal word "bluetooth?".
+
+** The Payload (Extensions)
+#+begin_src scheme
+   #:extensions
+   (list
+    (apply contribute user-groups-target
+           (append '("netdev")
+                   (if bluetooth? '("lp") '())))
+#+end_src
+- Adds you to the "netdev" group (allows you to change Wi-Fi networks via NetworkManager without typing sudo).
+- =(if bluetooth? '("lp") '())=: In scheme, =if= statements look like =(if CONDITION TRUE-RESULT FALSE-RESULT)=. So if Bluetooth is enabled, it adds you to the "lp" group (sometimes required for bluetooth pairing permissions), otherwise it adds you to an empty list.
+
+#+begin_src scheme
+    (apply contribute system-services-target
+           (append
+            (list
+             (service network-manager-service-type)
+             (service wpa-supplicant-service-type))
+#+end_src
+Adds the core NetworkManager system and WPA Supplicant (which handles Wi-Fi passwords).
+
+#+begin_src scheme
+            (if bluetooth?
+                (list (service bluetooth-service-type
+                               (bluetooth-configuration
+                                (auto-enable? auto-enable-bluetooth?))))
+                '())
+#+end_src
+If the user kept Bluetooth turned on, it creates the Bluetooth service and passes it the =auto-enable-bluetooth?= variable to determine if the Bluetooth radio should automatically turn on when the computer boots. If bluetooth is off, it appends an empty list ='()=.
+
+#+begin_src scheme
+            (if avahi?
+                (list (service avahi-service-type))
+                '())
+            (if ntp?
+                (list (service ntp-service-type))
+                '()))))))
+#+end_src
+Similarly appends Avahi (mDNS) and NTP (Clock sync) if they were kept turned on by the user.

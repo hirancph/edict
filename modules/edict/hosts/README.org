@@ -16,13 +16,13 @@ One file per host, exporting:
 
 * For Beginners: Lists and Composition
 
-In a host file like `vessel.scm`, you will see:
+In a host file like =vessel.scm=, you will see:
 #+begin_src scheme
 (define %vessel-features
   (list (desktop-feature) (base-feature)))
 #+end_src
 
-- `list`: Think of this like a shopping list. We are calling the `desktop-feature` command and the `base-feature` command, and putting their results into a basket.
+- =list=: Think of this like a shopping list. We are calling the =desktop-feature= command and the =base-feature= command, and putting their results into a basket.
 
 Then you see:
 #+begin_src scheme

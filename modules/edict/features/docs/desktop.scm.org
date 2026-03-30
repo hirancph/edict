@@ -1,0 +1,107 @@
+#+title: Line-by-Line Guide: desktop.scm (Feature)
+#+author: hirancph
+
+* What is this file?
+
+This is the =desktop= feature. It provides everything a desktop computer needs *except* the Window Manager itself.
+It configures audio support, dbus, power management (sleep/suspend), and thumb-drive mounting.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict features desktop)
+  #:use-module (gnu services)
+  #:use-module (gnu services dbus)
+  #:use-module (gnu services desktop)
+  #:use-module (gnu services xorg)
+  #:use-module (gnu system shadow)
+  #:use-module (gnu packages gnome)
+  #:use-module (gnu packages freedesktop)
+  #:use-module (edict features)
+  #:export (desktop-feature))
+#+end_src
+Standard module block. We are importing all the upstream desktop services (dbus, xorg, freedesktop apps). We export the =desktop-feature= command.
+
+** The Feature Constructor
+#+begin_src scheme
+(define* (desktop-feature #:key
+                          (extra-user-groups '()))
+  "Desktop session essentials: elogind, D-Bus, PolicyKit, udisks,
+upower, fontconfig, XWayland socket, and brightness control."
+#+end_src
+It accepts one optional keyword =#:extra-user-groups=. The string below it is a "docstring", a comment that tools can read to describe the function.
+
+** The Validation Block
+#+begin_src scheme
+  ;; ── Validation ──
+  (ensure-pred list? extra-user-groups)
+#+end_src
+Strictly checks that if the user provides extra user groups, it is an actual List (like ='( "docker" "video" )=) and not a string or boolean.
+
+** The Feature Object
+#+begin_src scheme
+  (edict-feature
+   #:name 'desktop
+   #:provides '(desktop base-x11)
+   #:requires '(base)
+   #:values '((has-desktop? . #t))
+#+end_src
+- =#:provides=: It promises to provide the ='desktop= label, and the ='base-x11= label.
+- =#:requires=: It absolutely depends on the =base= feature being installed. The topological sort will guarantee =base= comes first.
+- =#:values=: It publishes the =has-desktop?= flag as True. Other features might use this to install desktop-specific software. Note that we are using a plain quote ='()= instead of a backtick `` `() `` here because we aren't injecting any variables (=,port=), it's just raw symbols.
+
+** The Payload (Extensions)
+#+begin_src scheme
+   #:extensions
+   (list
+#+end_src
+
+#+begin_src scheme
+    ;; System group for PipeWire / low-latency audio scheduling.
+    (contribute groups-target
+                (user-group (system? #t) (name "realtime")))
+#+end_src
+Guix requires us to define System Groups manually. This creates a system-level group called "realtime". This allows audio systems like PipeWire to ask the Linux kernel for high priority scheduling (so audio doesn't glitch when you compile code).
+
+#+begin_src scheme
+    (apply contribute user-groups-target
+           (append '("audio" "video" "input" "realtime") extra-user-groups))
+#+end_src
+This adds /your user/ to the "audio", "video", "input" (keyboard/mouse monitoring), and "realtime" groups so that you have permission to use the hardware.
+
+#+begin_src scheme
+    (contribute system-packages-target
+                gvfs brightnessctl)
+#+end_src
+Adds =gvfs= (GNOME virtual file system, needed for mounting thumb drives visually) and =brightnessctl= (controls laptop screen brightness) to the system packages bucket.
+
+#+begin_src scheme
+    (contribute system-services-target
+                (service elogind-service-type)
+#+end_src
+=elogind=: Manages user logins, and handles things like "Suspend the laptop when the lid is closed."
+
+#+begin_src scheme
+                (service dbus-root-service-type)
+                (service polkit-service-type)
+                polkit-wheel-service
+#+end_src
+- =dbus=: The messaging bus system that allows desktop apps to talk to each other.
+- =polkit=: The system that pops up the "Authentication Required" dialog when an app wants root permissions without asking you for a sudo password in the terminal.
+- =polkit-wheel-service=: Says "Anyone in the 'wheel' group (Admins) is allowed to authenticate via Polkit."
+
+#+begin_src scheme
+                (service udisks-service-type)
+                (service upower-service-type)
+#+end_src
+- =udisks=: Actually mounts the USB thumb drives.
+- =upower=: Exposes battery percentage to your desktop environment.
+
+#+begin_src scheme
+                fontconfig-file-system-service
+                (service x11-socket-directory-service-type)
+                (udev-rules-service 'brightnessctl-udev-rules brightnessctl)))))
+#+end_src
+- =fontconfig=: Configures fonts for graphical applications.
+- =x11-socket=: Creates the =/tmp/.X11-unix= socket directory, which is necessary for X11/XWayland applications to communicate with the display server.
+- =udev-rules-service=: Tells the kernel to allow standard users (not just root) to change the screen brightness via =brightnessctl=.

@@ -1,0 +1,37 @@
+#+title: Line-by-Line Guide: config.scm
+#+author: hirancph
+
+* What is this file?
+
+This file defines the global "hard-coded" variables for your system. These are things like your name and your timezone that rarely change, but that many different parts of the system need to know about.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict config)
+  #:export (%user-name
+            %full-name
+            %timezone
+            %locale))
+#+end_src
+- =define-module (edict config)=: This declares that this file is a module named "config" inside the "edict" folder.
+- =#:export=: This tells Guile that the variables listed here are allowed to be used by /other/ files. If a variable is not exported, it is private to this file.
+
+#+begin_src scheme
+(define %user-name "hirancph")
+(define %full-name "Hiran C P H")
+#+end_src
+- =define=: Creates a variable. 
+- =%user-name=: The name of the variable. The =%= sign is just a naming convention in Guix for "global" variables. It doesn't do anything special mechanically.
+- ="hirancph"=: A string (text) representing your username on the Linux system.
+
+#+begin_src scheme
+(define %timezone "Asia/Kolkata")
+(define %locale   "en_US.utf8")
+#+end_src
+- =%timezone=: Sets the clock configuration for the Operating System.
+- =%locale=: Sets the language for the system (English, United States, UTF-8 encoding).
+
+* Why is this useful?
+
+Later in the codebase, the system builder needs to know what to name your home directory (e.g., =/home/hirancph=). Instead of typing ="hirancph"= manually in the system file, it imports =(edict config)= and uses the =%user-name= variable. If you ever change your username, you only update it here!

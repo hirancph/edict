@@ -1,0 +1,81 @@
+#+title: Line-by-Line Guide: vessel.scm (Systems)
+#+author: hirancph
+
+* What is this file?
+
+This file creates your GNU Guix Operating System.
+It takes your perfectly composed features from =hosts/vessel.scm=, and adds the physical hardware definitions (like your bootloader and hard drives).
+
+When you run =make system=, this is the file that gets executed.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict systems vessel)
+  #:use-module (gnu)
+  #:use-module (edict config)
+  #:use-module (edict features)
+  #:use-module (edict build)
+  #:use-module (edict hosts vessel))
+#+end_src
+Notice the imports:
+- =(edict build)=: We need this because it contains the =edict-operating-system= macro.
+- =(edict hosts vessel)=: We need this because we are going to borrow the =%vessel= variable we just created.
+
+** The Operating System Macro
+
+#+begin_src scheme
+(edict-operating-system %vessel
+
+  (host-name "vessel")
+  (timezone  %timezone)
+  (locale    %locale)
+  (keyboard-layout (keyboard-layout "us"))
+#+end_src
+- =edict-operating-system %vessel=: "Run the system builder algorithm, and feed it my perfectly sorted =%vessel= features."
+- The rest of the fields (=host-name=, =timezone=, =locale=) are injected manually. Notice that we are using the =%timezone= variable that we defined way back in =config.scm=.
+
+** The Bootloader (GRUB)
+
+#+begin_src scheme
+  ;; Bootloader — UEFI GRUB, dual-boot with Windows
+  (bootloader
+   (bootloader-configuration
+    (bootloader grub-efi-bootloader)
+    (targets '("/boot/efi"))
+    (keyboard-layout (keyboard-layout "us"))))
+#+end_src
+This tells Guix how to actually start the computer.
+- =grub-efi-bootloader=: We are using modern UEFI (not legacy BIOS).
+- =targets '("/boot/efi")=: This is the physical location on your hard drive where the bootloader expects to be installed.
+
+** File Systems (Hard Drives)
+
+#+begin_src scheme
+  ;; File systems — vessel hardware
+  (file-systems
+   (cons*
+#+end_src
+- =file-systems=: A list of every hard drive partition Guix needs to know about.
+- =cons*=: This is a Scheme command that means "Take these new items, and stick them onto the front of this existing list."
+
+#+begin_src scheme
+    (file-system
+     (device (uuid "726825b4-7c05-4909-81d2-abdd71548019" 'ext4))
+     (mount-point "/")
+     (type "ext4"))
+#+end_src
+This is your Main Drive (the "Root" partition, marked by =/=). The UUID is a mathematically unique ID that identifies your physical SSD so Guix doesn't accidentally wipe the wrong drive.
+
+#+begin_src scheme
+    (file-system
+     (device (uuid "3DA9-349D" 'fat32))
+     (mount-point "/boot/efi")
+     (type "vfat"))
+#+end_src
+This is the hidden Boot Partition (formatted as FAT32, which is required by all UEFI motherboards).
+
+#+begin_src scheme
+    %base-file-systems)))
+#+end_src
+This is the "existing list" we are sticking our drives onto. =%base-file-systems= contains hidden, virtual Linux drives (like =/proc= and =/dev=) that are absolutely required for the system to function. If you don't include this, your computer will completely crash during boot.

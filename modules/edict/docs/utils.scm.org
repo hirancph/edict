@@ -1,0 +1,49 @@
+#+title: Line-by-Line Guide: utils.scm
+#+author: hirancph
+
+* What is this file?
+
+This file contains "Utilities" — small helper functions that don't belong to any specific feature, but make writing Scheme code much easier and less verbose overall.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict utils)
+  #:use-module (gnu packages)
+  #:use-module (srfi srfi-1)
+  #:export (pkgs
+            path-append))
+#+end_src
+- =define-module=: Declares this as the =(edict utils)= module.
+- =#:use-module (gnu packages)=: Imports the massive upstream Guix packages library. We need this because we are about to write a function that finds packages!
+- =#:use-module (srfi srfi-1)=: SRFIs are standard Scheme libraries. SRFI-1 is the standard "List Library". It gives us advanced tools for manipulating lists (like arrays in other languages).
+- =#:export=: Exposes the =pkgs= and =path-append= functions to the rest of Edict.
+
+** The `pkgs` Function
+
+#+begin_src scheme
+(define (pkgs . names)
+  (map specification->package names))
+#+end_src
+This function is a massive timesaver. 
+- =(define (pkgs . names))=: Defines a function named =pkgs=. The =. names= syntax is special: the dot means "take however many arguments the user provides, and turn them all into a list called =names=".
+- =map=: A built-in function that takes a list, applies a command to every single item in that list, and returns a new list of the results.
+- =specification->package=: A command from Guix that takes a simple string (like ="git"=) and searches the Guix database for the actual, complex package object.
+
+*Why do we need this?*
+Usually, to install packages you would have to write:
+=(list (specification->package "git") (specification->package "curl") (specification->package "vim"))=
+With this utility, you just write:
+=(pkgs "git" "curl" "vim")=
+
+** The `path-append` Function
+
+#+begin_src scheme
+(define (path-append . parts)
+  (string-join parts "/"))
+#+end_src
+- =path-append=: This function takes multiple strings (again, the =. parts= syntax means it takes any number of arguments) and joins them together using a forward slash =/=.
+- =string-join=: A built-in string manipulation command.
+
+*Why do we need this?*
+Instead of manually typing =(string-append "/home/" user "/.config")=, you can write =(path-append "/home" user ".config")=. It is much cleaner and less prone to missing-slash typos.

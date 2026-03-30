@@ -1,0 +1,75 @@
+#+title: Line-by-Line Guide: nonguix.scm (Feature)
+#+author: hirancph
+
+* What is this file?
+
+This is the =nonguix= feature. It is perhaps the most important feature for making Guix actually run on standard PC hardware. 
+
+By default, the GNU Guix project refuses to ship any non-free software, including the proprietary "firmware blobs" that almost all Wi-Fi cards, GPUs, and motherboards require to operate. Without those blobs, the default "Linux-Libre" kernel often cannot even boot to a graphical screen.
+
+This feature does two things:
+1. Replaces the default free kernel with the standard Linux kernel (from the =nongnu= channel).
+2. Adds the =substitutes.nonguix.org= server so that you don't have to compile your kernel and web browser from scratch (which takes hours).
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict features nonguix)
+  #:use-module (gnu services)
+  #:use-module (gnu services base)
+  #:use-module (guix gexp)
+  #:use-module (nongnu packages linux)
+  #:use-module (nongnu system linux-initrd)
+  #:use-module (edict features)
+  #:export (nonguix-feature))
+#+end_src
+Note that we are importing from =(nongnu packages linux)= here instead of the standard =(gnu packages linux)=.
+
+** The Constructor
+#+begin_src scheme
+(define* (nonguix-feature #:key
+                          (kernel linux)
+                          (firmware (list linux-firmware))
+                          (initrd microcode-initrd))
+#+end_src
+It defaults to using the standard =linux= kernel package, the huge =linux-firmware= package (which contains blobs for Intel, AMD, Realtek, etc), and the =microcode-initrd= (which loads CPU microcode updates early in boot).
+
+** Scope and Values
+#+begin_src scheme
+  ;; ── Validation ──
+  (ensure-pred list? firmware)
+
+  (edict-feature
+   #:name 'nonguix
+   #:provides '(nonguix kernel)
+   #:requires '()
+   #:scope 'system
+   #:values (make-feature-values kernel firmware initrd)
+#+end_src
+- =#:scope 'system=: This explicitly tells Edict that this feature only belongs to the Operating System. (If you try to inject a Linux kernel into your Home user-profile, nothing will happen anyway, but this keeps things clean).
+- =#:values=: Instead of using the quasiquoting syntax (`` `((kernel . ,kernel)) ``), it uses a helper macro called =make-feature-values= which does the exact same thing but looks cleaner. 
+- **The Magic:** By publishing the =kernel=, =firmware=, and =initrd= values to the global store, the macro in =build.scm= (which you read about earlier) will automatically pick them up and inject them into the =operating-system= record for you.
+
+** The Payload (Extensions)
+#+begin_src scheme
+   #:extensions
+   (list
+    (contribute system-services-target
+     (simple-service 'add-nonguix-substitutes
+                     guix-service-type
+                     (guix-extension
+                      (substitute-urls
+                       (append '("https://substitutes.nonguix.org")
+                               %default-substitute-urls))
+#+end_src
+A "substitute" in Guix is a pre-compiled binary package. When you tell Guix to install a package, it checks the "substitute servers" to see if they have already compiled it. If they have, it downloads it instantly. If not, your computer starts downloading source code to compile it from scratch.
+
+This block appends the =nonguix.org= server to Guix's default list of substitute servers.
+
+#+begin_src scheme
+                      (authorized-keys
+                       (append (list (plain-file "nonguix.pub"
+                                      "(public-key (ecc (curve Ed25519) (q #C1FD53E5D4CE971933EC50C9F307AE2171A2D3B52C804642A7A35F84F3A4EA98#)))"))
+                               %default-authorized-guix-keys))))))))
+#+end_src
+For security reasons, Guix will not download pre-compiled binaries from a server unless that server is mathematically authorized. This injects the public cryptographic key for the Nonguix server so that your system trusts it.

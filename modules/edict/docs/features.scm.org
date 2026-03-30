@@ -1,0 +1,74 @@
+#+title: Line-by-Line Guide: features.scm
+#+author: hirancph
+
+* What is this file?
+
+This is the Engine. It is the beating heart of Edict. It defines what a "Feature" is, what "Targets" exist, and houses the incredibly smart =compose-features= command that sorts and validates everything.
+
+It is 260 lines of advanced Scheme, so we will only break down the concepts you absolutely need to understand.
+
+* 1. The Targets
+
+#+begin_src scheme
+(define system-packages-target  'system-packages)
+(define system-services-target   'system-services)
+;; ... other targets ...
+(define user-accounts-target     'user-accounts)
+#+end_src
+These are simply labels. Remember that a symbol (identified by the quote ='=) is just a label. We are defining variables to hold these symbols so if we ever misspell a target name, Guile throws an error.
+
+* 2. The `ensure-pred` Macro
+
+#+begin_src scheme
+(define-syntax ensure-pred
+  (syntax-rules ()
+    ((_ pred field)
+     (unless (pred field)
+       (error (format #f "edict: validation failed — '~a' does not satisfy ~a (got: ~a)"
+                      'field (procedure-name pred) field))))))
+#+end_src
+This is a macro used in all your feature files (e.g., =(ensure-pred integer? port)=).
+- It takes a predicate function (like =integer?=) and a variable (like =port=).
+- It runs the function. If =pot= is NOT an integer, it immediately crashes and prints a beautiful, human-readable error message so you know exactly what you did wrong.
+
+* 3. The `contribute` Function
+
+#+begin_src scheme
+(define (contribute target . payload)
+  (%make-edict-extension target payload))
+#+end_src
+When you write a feature and you say =(contribute system-packages-target git)=, you are calling this function. It simply packages up your target label and your payload (the software) into a small container object called an "extension".
+
+* 4. The Feature Object
+
+#+begin_src scheme
+(define* (edict-feature #:key
+                        (name 'unnamed)
+                        (provides '())
+                        (requires '())
+                        (values '())
+                        (extensions '())
+                        (scope 'both))
+  ;; validation omitted
+  (%make-edict-feature name provides requires values extensions scope))
+#+end_src
+This is the constructor for a Lego block. It takes all the keyword arguments your feature specifies (like =#:provides= and =#:extensions=) and packages them tightly into a single =%make-edict-feature= object.
+
+* 5. Topological Sort (`tsort`)
+
+#+begin_src scheme
+(define (tsort features)
+  ;; ... 
+#+end_src
+This function runs Kahn's Algorithm. It looks at a pile of Lego blocks, reads their requires/provides labels, and figures out the one mathematical order they must be placed in so that no block is laid before its foundation. It also detects "cycles" (e.g. Block A requires Block B, but Block B requires Block A) and throws an error if it finds one.
+
+* 6. `compose-features`
+
+#+begin_src scheme
+(define* (compose-features features #:key (scope 'both))
+#+end_src
+This is the command you run in your host file (like `vessel.scm`).
+1. It filters the features based on scope (e.g. if we are building the Home environment, it throws away all the features marked as system-only).
+2. It sorts the blocks using =tsort=.
+3. It scans all the =Values= published by features to make sure no two features tried to publish the exact same key (which would cause a silent conflict).
+4. It returns a final =composed-features= object containing the ordered list, all values, and all buckets heavily packed with software, ready to be handed to the Builder (=build.scm=).

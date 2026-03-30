@@ -1,0 +1,55 @@
+#+title: Line-by-Line Guide: vessel.scm (Hosts)
+#+author: hirancph
+
+* What is this file?
+
+This is your single most important configuration file. It lives in =modules/edict/hosts/vessel.scm=.
+
+It defines the exact list of Lego blocks (features) that are installed on your computer named "vessel". By keeping this list in one single file, both your Operating System (=systems/vessel.scm=) and your User Profile (=home/vessel.scm=) are guaranteed to be perfectly synchronized.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict hosts vessel)
+  #:use-module (edict features)
+  #:use-module (edict features base)
+  #:use-module (edict features desktop)
+  #:use-module (edict features networking)
+  #:use-module (edict features nonguix)
+  #:use-module (edict features nvidia)
+  #:use-module (edict features ssh)
+  #:export (%vessel-features
+            %vessel))
+#+end_src
+We are importing the core Engine (=(edict features)=) and every single building block we created in the =features/= directory. We export two variables: =%vessel-features= (the raw list) and =%vessel= (the finished, sorted output).
+
+** The Feature List
+
+#+begin_src scheme
+(define %vessel-features
+  (list
+   (nonguix-feature)            ;; non-free kernel + substitutes
+   (nvidia-feature)             ;; NVIDIA proprietary GPU driver
+   (desktop-feature)            ;; seat, D-Bus, PolicyKit, storage, power
+   (networking-feature)         ;; NetworkManager, Wi-Fi, Bluetooth, NTP
+   (ssh-feature #:port 2222)    ;; OpenSSH daemon
+   (base-feature)))             ;; core tools, symlinks, NTFS, cron GC
+#+end_src
+This creates a plain list containing the outputs of all our feature commands.
+Notice that the order here *literally does not matter*.
+You can put =base-feature= at the bottom, and =nvidia-feature= at the top. The engine will sort them correctly anyway.
+
+Also notice the keyword argument on SSH:
+=(ssh-feature #:port 2222)=
+If you wanted to turn off Bluetooth, you would just edit this list:
+=(networking-feature #:bluetooth? #f)=
+
+** Composition (The Engine)
+
+#+begin_src scheme
+(define %vessel (compose-features %vessel-features))
+#+end_src
+This single line runs the entire Edict engine.
+It takes your raw list of features, sorts them, checks for conflicts, validates values, and saves the final result into a variable named =%vessel=. 
+
+This =%vessel= variable is what your System Builder and your Home Builder will consume to actually generate code.

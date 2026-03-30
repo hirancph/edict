@@ -1,0 +1,52 @@
+#+title: Line-by-Line Guide: vessel.scm (Home)
+#+author: hirancph
+
+* What is this file?
+
+This file creates your GNU Guix Home Environment.
+It takes your perfectly composed features from =hosts/vessel.scm=, but instead of wiring them into the Operating System, it extracts the *User Profile* configurations (like desktop environment settings, your CLI tools, and your personal user-level programs) and wires them to your user account without touching the system root.
+
+When you run =make home=, this is the file that gets executed.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict home vessel)
+  #:use-module (gnu home)
+  #:use-module (gnu home services)
+  #:use-module (edict features)
+  #:use-module (edict build)
+  #:use-module (edict hosts vessel))
+#+end_src
+Notice the imports:
+- =(gnu home)=: Instead of importing everything from =(gnu system)= like the previous file did, we are importing the distinct Guix Home architecture.
+- =(edict build)=: We need this because it contains the =edict-home-environment= macro.
+- =(edict hosts vessel)=: We need this because we are going to borrow the exact same =%vessel= variable we used in the systems file.
+
+** The Home Environment Macro
+
+#+begin_src scheme
+(edict-home-environment %vessel)
+#+end_src
+That's it. That is the entire configuration! 
+
+** How does this work?
+
+Because of how Edict is designed, all the heavy lifting has already been mathematically calculated.
+
+When you run =edict-home-environment= on the =%vessel= variable:
+1. It looks at the massive list of sorted features inside =%vessel=.
+2. It walks up to the =home-packages-target= bucket and the =home-services-target= bucket.
+3. It pours the contents of those buckets out and perfectly constructs a massive `home-environment` block in Scheme.
+4. Guix reads that block, creates symlinks in your =~/.guix-home= folder, updates your Bash profile, and launches your user-level daemons instantaneously.
+
+** Extending the Home Profile
+
+If you suddenly decided you wanted a special CLI program (like =htop=) installed *only* on the "vessel" machine but not other machines, and you didn't want to create a whole new reusable feature for it, you could just append it here:
+
+#+begin_src scheme
+(edict-home-environment %vessel
+  (packages (list (specification->package "htop"))))
+#+end_src
+
+But ninety-nine percent of the time, this file will remain a simple, beautiful one-liner because the Lego blocks (Features) handle everything.

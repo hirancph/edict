@@ -1,0 +1,84 @@
+#+title: Line-by-Line Guide: nvidia.scm (Feature)
+#+author: hirancph
+
+* What is this file?
+
+This is the =nvidia= feature. Because NVIDIA provides closed-source, proprietary drivers, integrating them into a purely libre system like GNU Guix requires some special handling.
+
+This feature uses the =nongnu= channel to fetch the proprietary drivers and injects the necessary kernel arguments and services to make them work, particularly for modern display servers like Wayland (which require Modesetting).
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict features nvidia)
+  #:use-module (gnu services)
+  #:use-module (gnu services linux)
+  #:use-module (nongnu packages nvidia)
+  #:use-module (nongnu services nvidia)
+  #:use-module (edict features)
+  #:export (nvidia-feature))
+#+end_src
+We are importing the upstream Linux services, plus the special NVIDIA packages and services provided by the =nongnu= channel.
+
+** The Constructor
+#+begin_src scheme
+(define* (nvidia-feature #:key
+                         (driver nvidia-driver)
+                         (modesetting? #t)
+                         (blacklist-nouveau? #t))
+#+end_src
+- =driver=: By default, it uses the =nvidia-driver= package.
+- =modesetting?=: Defaults to True. Modesetting is an absolute requirement if you want to run modern desktop environments (like Hyprland or GNOME Wayland).
+- =blacklist-nouveau?=: Defaults to True. "Nouveau" is the reverse-engineered, open-source driver for NVIDIA cards. It is notoriously slow. This tells the Linux kernel to actively block Nouveau from loading so that the official proprietary driver can take control.
+
+#+begin_src scheme
+  ;; ── Validation ──
+  (ensure-pred boolean? modesetting?)
+  (ensure-pred boolean? blacklist-nouveau?)
+
+  (edict-feature
+   #:name 'nvidia
+   #:provides '(nvidia gpu)
+   #:requires '(nonguix base)
+   #:scope 'system
+   #:values `((has-nvidia? . #t)
+              (nvidia-driver . ,driver))
+#+end_src
+- **Requires System Scope:** Just like =nonguix=, this manipulates the kernel and boot process, so it is strictly a ='system= feature.
+- **Requires nonguix:** It specifically =#:requires= the =nonguix= feature. If you try to build a system with the proprietary NVIDIA driver without the non-free Linux kernel, it will completely fail. Topological sorting guarantees =nonguix= runs first.
+- **Publishing Values:** It announces it is installed (=(has-nvidia? . #t)=) and publishes exactly what driver package it used.
+
+** The Payload (Extensions)
+#+begin_src scheme
+   #:extensions
+   (list
+    (contribute user-groups-target "video")
+#+end_src
+Ensures the user is in the "video" group (required for 3D hardware acceleration access).
+
+#+begin_src scheme
+    (apply contribute kernel-arguments-target
+           (append
+            (if blacklist-nouveau? '("modprobe.blacklist=nouveau") '())
+            (if modesetting? '("nvidia_drm.modeset=1") '())))
+#+end_src
+Here we are modifying the **Kernel Command Line** (the arguments passed to the Linux kernel by the bootloader the moment you turn on the computer).
+- If =blacklist-nouveau?= is true, it passes =modprobe.blacklist=nouveau=, which stops the kernel from loading the open-source driver.
+- If =modesetting?= is true, it passes =nvidia_drm.modeset=1=, which instructs the NVIDIA driver to handle modern Direct Rendering Manager routines.
+
+#+begin_src scheme
+    (contribute kernel-modules-target driver)
+#+end_src
+This takes the proprietary driver software and literally shoves it into the Linux kernel as a Loadable Module.
+
+#+begin_src scheme
+    (contribute system-services-target
+     (service nvidia-service-type)
+     (service kernel-module-loader-service-type
+              '("nvidia"
+                "nvidia_modeset"
+                "nvidia_uvm"
+                "nvidia_drm"))))))
+#+end_src
+- =nvidia-service-type=: Activates the proprietary daemon in user-space.
+- =kernel-module-loader-service-type=: This explicitly commands the Linux kernel to wake up and load these four specific NVIDIA sub-modules during the boot sequence. =uvm= handles Unified Virtual Memory (sometimes used by CUDA) and =drm= handles the display.
