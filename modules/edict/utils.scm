@@ -1,7 +1,9 @@
 ;;; Copyright © 2026 hirancph
 ;;;
-;;; Shared utility procedures used across the configuration.
-;;; Place helpers here that are used by multiple modules to avoid duplication.
+;;; Shared utility procedures used across the edict configuration.
+;;;
+;;; Keep this module lean — only include genuinely reusable helpers.
+;;; Feature-specific logic belongs in the feature modules themselves.
 
 (define-module (edict utils)
   #:use-module (gnu packages)
@@ -10,7 +12,7 @@
             path-append))
 
 (define (pkgs . names)
-  "Resolve a list of package specification strings to actual package objects.
+  "Resolve package specification strings to package objects.
 Example: (pkgs \"git\" \"curl\" \"htop\")"
   (map specification->package names))
 

@@ -2,60 +2,88 @@
 
 * Purpose
 
-Composable feature units that bundle packages, services, and configuration
-into logical, reusable groups.
+Composable feature units built on the =edict-feature= record from =(edict features)=.
 
-Features are the primary way to organize your configuration. Each feature
-is a self-contained module that can be independently included or excluded
-from your system or home environment.
+Each feature bundles kernel arguments, loadable modules, packages,
+services, system groups, and user supplementary groups into a single
+composable unit.  Multiple features are merged with =compose-features=;
+duplicates in user groups are removed automatically.
 
 * Design Pattern
 
 Each feature module should:
 
 1. Define a Guile module: =(define-module (edict features foo) ...)=
-2. Export one or more feature definitions
-3. Bundle together the packages, services, and settings for that concern
+2. Import =(edict features)= for =edict-feature=, =contribute=, =ensure-pred=
+3. Export a constructor function: =(define* (foo-feature #:key ...) ...)=
+4. Validate all keyword arguments with =ensure-pred=
+5. Set an appropriate =#:scope= (='system=, ='home=, or ='both=)
 
-* Example
+* Constructor Pattern
 
 #+begin_src scheme
-;; modules/edict/features/desktop.scm
-(define-module (edict features desktop)
-  #:use-module (gnu packages gnome)
-  #:use-module (gnu services desktop)
-  #:export (%desktop-packages
-            %desktop-services))
+(define* (my-feature #:key
+                     (option-a "default")
+                     (option-b #t))
+  "Docstring explaining what this feature does."
 
-(define %desktop-packages
-  (list adwaita-icon-theme gnome-themes-extra))
+  ;; ── Validation ──
+  (ensure-pred string? option-a)
+  (ensure-pred boolean? option-b)
 
-(define %desktop-services
-  (list (service gnome-desktop-service-type)))
+  (edict-feature
+   #:name 'my-feature
+   #:provides '(my-feature)      ;; Symbols this feature makes available
+   #:requires '(base)            ;; Symbols that must be provided first
+   #:scope 'both                 ;; 'system, 'home, or 'both
+   #:values `((my-key . ,option-a))
+   #:extensions
+   (list
+    (contribute system-packages-target ...)
+    (contribute system-services-target ...)
+    (contribute home-packages-target ...)
+    (contribute home-services-target ...))))
 #+end_src
 
-* Naming Convention
+* Available Targets
 
-Name features by their functional concern:
+| Target                     | Wired into                  |
+|----------------------------+-----------------------------|
+| =system-packages-target=    | =operating-system= packages   |
+| =system-services-target=    | =operating-system= services   |
+| =home-packages-target=      | =home-environment= packages   |
+| =home-services-target=      | =home-environment= services   |
+| =kernel-arguments-target=   | Kernel command line          |
+| =kernel-modules-target=     | Loadable kernel modules      |
+| =groups-target=              | System group records         |
+| =user-groups-target=         | User supplementary groups    |
+| =user-accounts-target=      | Additional user accounts     |
 
-#+begin_example
-features/
-├── audio.scm            ;; PipeWire, PulseAudio, audio tools
-├── desktop.scm          ;; Desktop environment base
-├── development.scm      ;; Dev tools, compilers, REPLs
-├── fonts.scm            ;; Font configuration
-├── gpu.scm              ;; GPU drivers (NVIDIA, AMD, etc.)
-├── networking.scm       ;; Network manager, firewall, VPN
-├── shells.scm           ;; Shell configuration (bash, zsh)
-├── theming.scm          ;; GTK/Qt themes, icons, cursors
-├── version-control.scm  ;; Git, credentials, signing
-└── wayland.scm          ;; Wayland compositor (Hyprland, etc.)
-#+end_example
+* Value Publishing
+
+Use =make-feature-values= for ergonomic value publishing:
+
+#+begin_src scheme
+;; Instead of:
+#:values `((kernel . ,kernel) (firmware . ,firmware))
+
+;; Use:
+#:values (make-feature-values kernel firmware)
+#+end_src
+
+* Feature Scoping
+
+Features can declare their scope:
+- ='system= — only included in =edict-operating-system= builds
+- ='home= — only included in =edict-home-environment= builds
+- ='both= (default) — included in both
+
+System-only features (like =nonguix=, =nvidia=, =ssh=) should use =#:scope 'system=.
 
 * Features vs Packages vs Services
 
-- *Features*: High-level compositions — "I want audio support"
-- *Packages*: Low-level package definitions — "Here's how to build foo"
-- *Services*: Low-level service types — "Here's a daemon definition"
+- *Features* (=features/=): High-level compositions — "I want desktop support"
+- *Packages* (=packages/=): Custom package definitions not in upstream Guix
+- *Services* (=services/=): Custom service type definitions not in upstream Guix
 
-Features *use* packages and services. They are the glue layer.
+Features /use/ packages and services.  They are the glue layer.

@@ -1,71 +1,249 @@
-#+title: edict
+#+title: edict — A Composable Guix System Configuration
 #+author: hirancph
 
 * Overview
 
-This is my fully declarative GNU Guix system and home configuration, written
-entirely in GNU Guile.
+*edict* is a fully declarative GNU Guix system and home configuration
+written entirely in GNU Guile.
 
-* Directory Structure
+The centrepiece is a *feature engine*: a lightweight framework where
+self-contained features contribute packages, services, kernel arguments,
+groups, and user accounts to named /extension targets/.  Features
+declare what they =provide= and =require=, and are automatically
+topologically sorted — you never have to worry about ordering.
 
-| Directory      | Purpose                                                |
-|----------------+--------------------------------------------------------|
-| =channels/=      | Channel signing keys and per-channel configuration     |
-| =files/=         | Static assets that cannot be expressed in Guile        |
-| =manifests/=     | Ad-hoc package manifests for =guix shell -m=             |
-| =modules/edict/= | Guile module tree — the heart of the configuration     |
-| =patches/=       | Source patches for upstream or custom packages         |
-| =scripts/=       | Helper shell scripts for bootstrapping and maintenance |
-
-** Guile Modules (=modules/edict/=)
-
-| Module Path    | Purpose                                          |
-|----------------+--------------------------------------------------|
-| =config.scm=     | Global constants (user, timezone, locale, paths) |
-| =utils.scm=      | Shared utility procedures                        |
-| =features/=      | Composable feature units (packages + services)   |
-| =home/=          | Home environment definitions                     |
-| =home/services/= | Custom Guix Home service types                   |
-| =packages/=      | Custom or patched package definitions            |
-| =services/=      | Custom system-level service types                |
-| =systems/=       | Per-host operating-system configurations         |
+#+begin_example
+edict/
+├── channels.scm            Channel definitions for guix pull
+├── Makefile                 Convenience targets (make system, make home, …)
+├── modules/edict/
+│   ├── config.scm           Global constants (user, locale, paths)
+│   ├── utils.scm            Shared utility procedures
+│   ├── features.scm         ★ The feature engine (targets, values, composition)
+│   ├── build.scm            Operating-system & home-environment builders
+│   ├── features/            Composable feature modules
+│   │   ├── base.scm         Core tools, FHS symlinks, GC cron
+│   │   ├── desktop.scm      Seat management, D-Bus, PolicyKit
+│   │   ├── networking.scm   NetworkManager, Bluetooth, NTP
+│   │   ├── nonguix.scm      Non-free kernel & substitutes
+│   │   ├── nvidia.scm       NVIDIA proprietary driver
+│   │   └── ssh.scm          OpenSSH daemon
+│   ├── hosts/               Per-host feature selections (single source of truth)
+│   │   └── vessel.scm       Feature list for the "vessel" machine
+│   ├── systems/             Per-host operating-system declarations
+│   │   └── vessel.scm       Bootloader, file systems, hardware
+│   ├── home/                Per-host home-environment declarations
+│   │   └── vessel.scm       User-level config
+│   ├── packages/            Custom or patched package definitions
+│   └── services/            Custom system-level service types
+├── channels/                Channel signing keys
+├── files/                   Static assets (dotfiles, images, etc.)
+├── manifests/               Ad-hoc package manifests for guix shell -m
+├── patches/                 Source patches for packages
+└── scripts/                 Helper scripts for bootstrapping
+#+end_example
 
 * Quick Start
 
 #+begin_src sh
-# Pull channels
+# 1. Clone the repo
+git clone <url> ~/guix-config/edict
+cd ~/guix-config/edict
+
+# 2. Pull channels (Guix + nonguix)
 make pull
 
-# Reconfigure the system
-sudo make system
+# 3. Reconfigure the system (requires sudo)
+make system
 
-# Reconfigure the home environment
+# 4. Reconfigure the home environment
 make home
 #+end_src
 
-* Adding a New Feature
+* Architecture
 
-1. Create a new file in =modules/edict/features/=
-2. Define your feature as a Guile module: =(define-module (edict features your-feature) ...)=
-3. Bundle packages, services, and configuration within it
-4. Import and compose it in your system or home configuration
+** The Feature Engine
 
-* Adding a Custom Package
+A /feature/ is a composable unit that contributes to named /targets/:
 
-1. Create a new file in =modules/edict/packages/=
+#+begin_src scheme
+(define* (ssh-feature #:key (port 2222) (permit-root-login? #f))
+  (ensure-pred integer? port)         ;; ← input validation
+  (ensure-pred boolean? permit-root-login?)
+  (edict-feature
+   #:name 'ssh
+   #:provides '(ssh)                  ;; ← what this feature makes available
+   #:requires '(networking)           ;; ← what must exist before it
+   #:scope 'system                    ;; ← 'system, 'home, or 'both
+   #:values `((ssh-port . ,port))     ;; ← key-value pairs for cross-feature sharing
+   #:extensions
+   (list
+    (contribute system-services-target ;; ← named extension point
+     (service openssh-service-type
+              (openssh-configuration (port-number port) ...))))))
+#+end_src
+
+Features are composed with =compose-features=, which:
+1. *Topologically sorts* features based on =requires= / =provides=
+2. *Detects duplicate value keys* and raises an error
+3. *Merges extensions* by target, ready for the builders
+
+#+begin_src scheme
+(define %vessel-features
+  (list (nonguix-feature) (nvidia-feature) (desktop-feature)
+        (networking-feature) (ssh-feature #:port 2222) (base-feature)))
+
+(define %vessel (compose-features %vessel-features))
+;; Order doesn't matter — topological sort handles it.
+#+end_src
+
+** Built-in Targets
+
+| Target                  | Wired into             |
+|-------------------------+------------------------|
+| =system-packages-target=  | =operating-system= packages |
+| =system-services-target=  | =operating-system= services |
+| =home-packages-target=    | =home-environment= packages |
+| =home-services-target=    | =home-environment= services |
+| =kernel-arguments-target=  | Kernel command line     |
+| =kernel-modules-target=   | Loadable kernel modules |
+| =groups-target=            | System groups           |
+| =user-groups-target=      | User supplementary groups |
+| =user-accounts-target=    | Additional user accounts |
+
+** Value Sharing
+
+Features publish values that other features can read:
+
+#+begin_src scheme
+;; nonguix-feature publishes:
+#:values (make-feature-values kernel firmware initrd)
+
+;; nvidia-feature reads:
+(get-value 'has-nvidia? composed #f)  ;; returns #f if not found
+(require-value 'kernel composed)      ;; errors if not found
+#+end_src
+
+** The Host Layer (DRY)
+
+Each machine has a /host module/ that is the single source of truth
+for its feature selection.  Both the system and home configs import
+from here — never duplicate the feature list:
+
+#+begin_src scheme
+;; hosts/vessel.scm — ONE place to define vessel's features
+(define %vessel-features (list (nonguix-feature) (base-feature) ...))
+(define %vessel (compose-features %vessel-features))
+
+;; systems/vessel.scm — imports %vessel, adds hardware
+(edict-operating-system %vessel
+  (host-name "vessel") (bootloader ...) (file-systems ...))
+
+;; home/vessel.scm — imports the SAME %vessel
+(edict-home-environment %vessel)
+#+end_src
+
+** Builders
+
+=edict-operating-system= and =edict-home-environment= are macros that
+extract all contributed extensions from a composed-features record and
+wire them into the Guix =operating-system= or =home-environment=.
+
+Kernel, firmware, and initrd are auto-wired from feature values when
+present — no need to manually extract them in per-host files.
+
+* Adding Things
+
+** Adding a New Feature
+
+1. Create =modules/edict/features/your-feature.scm=
+2. Define a constructor that returns an =edict-feature=:
+
+#+begin_src scheme
+(define-module (edict features docker)
+  #:use-module (gnu services docker)
+  #:use-module (edict features)
+  #:export (docker-feature))
+
+(define* (docker-feature #:key (enable-iptables? #t))
+  (ensure-pred boolean? enable-iptables?)
+  (edict-feature
+   #:name 'docker
+   #:provides '(docker containers)
+   #:requires '(base)
+   #:scope 'system
+   #:extensions
+   (list
+    (contribute user-groups-target "docker")
+    (contribute system-services-target
+     (service docker-service-type
+              (docker-configuration
+               (enable-iptables? enable-iptables?)))))))
+#+end_src
+
+3. Import and add it to your host file.
+
+** Adding a New Host
+
+1. Create =modules/edict/hosts/laptop.scm= with feature selection
+2. Create =modules/edict/systems/laptop.scm= with hardware config
+3. Create =modules/edict/home/laptop.scm= with user config
+4. Run: =make system HOST=laptop=
+
+** Adding a Custom Package
+
+1. Create =modules/edict/packages/your-package.scm=
 2. Define the module: =(define-module (edict packages your-package) ...)=
-3. Use it anywhere via =(use-modules (edict packages your-package))=
+3. Use it anywhere: =(use-modules (edict packages your-package))=
 
-* Adding a New Host
+** Adding a Custom Service Type
 
-1. Create a new file in =modules/edict/systems/= (e.g., =laptop.scm=)
-2. Define the =operating-system= for that host
-3. Add a Makefile target or reconfigure command for it
+1. Create =modules/edict/services/your-service.scm=
+2. Define your =service-type= and export it
+3. Use it in a feature's =contribute= call
+
+** Modifying Features Per-Host
+
+Use =modify-features= to customise the feature list per-host:
+
+#+begin_src scheme
+(define %laptop-features
+  (modify-features %base-features
+    '(delete nvidia)                              ;; not on laptop
+    `(replace ssh ,(ssh-feature #:port 22))       ;; different port
+    `(append ,(laptop-power-feature))))           ;; add laptop-specific
+#+end_src
+
+* Introspection
+
+Use =describe-composition= to inspect a composed feature set:
+
+#+begin_src scheme
+(describe-composition %vessel)
+#+end_src
+
+Prints: feature order, all values, and extensions per target.
 
 * Design Principles
 
 - *Fully Guile*: Everything that can be expressed in Guile, is.
 - *Fully Declarative*: The system is entirely reproducible from this repo.
 - *Composable*: Features are independent, reusable units.
-- *Extensible*: Adding hosts, features, packages, or services follows a
-  consistent pattern.
+- *Validated*: Every feature argument is checked at definition time.
+- *DRY*: Host feature lists are defined once, shared everywhere.
+- *Extensible*: Adding hosts, features, packages, or services follows
+  a consistent pattern.
+- *Inspectable*: =describe-composition= shows exactly what's wired.
+
+* Comparison with Other Frameworks
+
+| Dimension              | edict                              | RDE              | aurtzy (mods)        |
+|------------------------+------------------------------------+------------------+----------------------|
+| Feature ordering       | Automatic (topological sort)       | Manual           | Manual               |
+| Input validation       | =ensure-pred= on all features       | =ensure-pred=      | =sanitizer= fields     |
+| Value conflict handling| Error on duplicates                | Error on dupes   | N/A (keyword args)   |
+| Extension mechanism    | Named targets (open protocol)      | services-getter  | Typed fields         |
+| Core engine size       | ~260 lines                         | ~509 lines       | ~386 lines           |
+| Dependencies           | SRFI-1, SRFI-9 only                | guix records, hash-tables | GOOPS, curried-defs |
+| Introspection          | =describe-composition=               | =pretty-print-rde-config= | Custom printer |
+| Feature scoping        | ='system= / ='home= / ='both=           | N/A              | System only          |

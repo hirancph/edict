@@ -1,0 +1,46 @@
+#+title: hosts/
+
+* Purpose
+
+Per-host feature selections — the *single source of truth* for which
+features each machine uses.
+
+Both =systems/<host>.scm= and =home/<host>.scm= import from here,
+so you never have to keep two feature lists in sync.
+
+* What Goes Here
+
+One file per host, exporting:
+- =%<host>-features= — the list of =edict-feature= values
+- =%<host>= — the composed result (=compose-features=)
+
+* Example
+
+#+begin_src scheme
+;; hosts/vessel.scm
+(define-module (edict hosts vessel)
+  #:use-module (edict features)
+  #:use-module (edict features base)
+  #:use-module (edict features desktop)
+  #:export (%vessel-features %vessel))
+
+(define %vessel-features
+  (list (desktop-feature) (base-feature)))
+
+(define %vessel (compose-features %vessel-features))
+#+end_src
+
+Then in =systems/vessel.scm=:
+
+#+begin_src scheme
+(use-modules (edict hosts vessel))
+(edict-operating-system %vessel
+  (host-name "vessel") ...)
+#+end_src
+
+And in =home/vessel.scm=:
+
+#+begin_src scheme
+(use-modules (edict hosts vessel))
+(edict-home-environment %vessel)
+#+end_src
