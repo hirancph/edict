@@ -1,0 +1,70 @@
+#+title: Line-by-Line Guide: gc.scm (Feature)
+#+author: hirancph
+
+* What is this file?
+
+This is the =gc= feature. It sets up an automated, scheduled background task (a cron job) to run the Guix Garbage Collector every night.
+
+Because Guix is a transactional system, every time you install an app or update your computer, Guix keeps the old version perfectly intact as a "generation". Over time, these old generations will eat up your entire hard drive. This feature prevents that without you having to remember to do it manually.
+
+* Line-by-Line Breakdown
+
+#+begin_src scheme
+(define-module (edict features gc)
+  #:use-module (gnu services)
+  #:use-module (gnu services mcron)
+  #:use-module (guix gexp)
+  #:use-module (edict features)
+  #:export (gc-feature))
+#+end_src
+We import the =mcron= service (which handles scheduled tasks) and =gexp= (which helps us write bash scripts from inside Scheme).
+
+** The Constructor
+#+begin_src scheme
+(define* (gc-feature #:key
+                     (gc-days 30)
+                     (gc-free "5G"))
+#+end_src
+It accepts two optional arguments:
+- =gc-days=: Only delete old generations if they are older than this many days (defaults to 30 days).
+- =gc-free=: Stop deleting things once your hard drive has this much free space (defaults to 5 Gigabytes).
+
+** Scope and Values
+#+begin_src scheme
+  ;; ── Validation ──
+  (ensure-pred integer? gc-days)
+  (ensure-pred string? gc-free)
+
+  (edict-feature
+   #:name 'gc
+   #:provides '(gc)
+   #:requires '()
+   #:values `((gc-days . ,gc-days)
+              (gc-free . ,gc-free))
+#+end_src
+It validates that you passed an integer and a string.
+It then publishes these values to the global store, so if you had a system dashboard feature later, it could easily read your =gc-days= setting and display it on the screen.
+
+** The Payload (Extensions)
+#+begin_src scheme
+   #:extensions
+   (list
+    (contribute system-services-target
+     (simple-service 'system-cron-jobs
+                     mcron-service-type
+                     (list
+                      #~(job "5 0 * * *"
+                             (string-append
+                              "guix gc -d "
+                              #$(number->string gc-days)
+                              "d -F "
+                              #$gc-free))))))))
+#+end_src
+This drops a cron job into the system-services bucket.
+
+- ="5 0 * * *"=: This is standard cron syntax that means "Run this at 00:05 AM every single day".
+- **What is `#~`?**: This is called a *G-Expression* (Gexp). It's a special Guix feature that creates a "script" that will compile and run *later* on the actual computer, rather than *right now* in your configuration file.
+- **What is `#$`?**: It's like unquoting (=,=). It means: "Take the value of this Scheme variable right now and inject it into the script".
+
+So if =gc-days= is =30= and =gc-free= is ="5G"=, the exact script Guix generates and runs on your computer at midnight will read:
+=guix gc -d 30d -F 5G=

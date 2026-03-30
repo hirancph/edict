@@ -3,34 +3,26 @@
 ;;; base.scm — Essential tools, compatibility shims, and maintenance.
 ;;;
 ;;; The "batteries included" feature that every edict host should use.
-;;; Provides: FHS symlinks, NTFS/exFAT support, nightly garbage
-;;; collection, and core CLI tools.
+;;; Provides: FHS symlinks, NTFS/exFAT support, and core CLI tools.
 
 (define-module (edict features base)
   #:use-module (gnu services)
   #:use-module (gnu services base)
-  #:use-module (gnu services mcron)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages certs)
   #:use-module (gnu packages file-systems)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages vim)
-  #:use-module (guix gexp)
   #:use-module (edict features)
   #:export (base-feature))
 
 (define* (base-feature #:key
-                       (gc-days 30)
-                       (gc-free "5G")
                        (extra-packages '())
                        (extra-user-groups '()))
-  "Essential system tools, FHS symlinks, and nightly GC.
-GC-DAYS: delete generations older than this.  GC-FREE: minimum free space."
+  "Essential system tools and FHS symlinks."
 
   ;; ── Validation ──
-  (ensure-pred integer? gc-days)
-  (ensure-pred string? gc-free)
   (ensure-pred list? extra-packages)
   (ensure-pred list? extra-user-groups)
 
@@ -38,8 +30,6 @@ GC-DAYS: delete generations older than this.  GC-FREE: minimum free space."
    #:name 'base
    #:provides '(base)
    #:requires '()
-   #:values `((gc-days . ,gc-days)
-              (gc-free . ,gc-free))
    #:extensions
    (list
     (apply contribute user-groups-target
@@ -56,15 +46,4 @@ GC-DAYS: delete generations older than this.  GC-FREE: minimum free space."
                 ("/usr/bin/env" ,(file-append coreutils "/bin/env"))))
 
      ;; NTFS udev rules for non-root mounting
-     (simple-service 'ntfs-mount-rules udev-service-type (list ntfs-3g))
-
-     ;; Nightly GC
-     (simple-service 'system-cron-jobs
-                     mcron-service-type
-                     (list
-                      #~(job "5 0 * * *"
-                             (string-append
-                              "guix gc -d "
-                              #$(number->string gc-days)
-                              "d -F "
-                              #$gc-free))))))))
+     (simple-service 'ntfs-mount-rules udev-service-type (list ntfs-3g))))))

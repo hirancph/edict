@@ -14,6 +14,7 @@
   #:use-module (edict features)
   #:use-module (edict features base)
   #:use-module (edict features desktop)
+  #:use-module (edict features gc)
   #:use-module (edict features networking)
   #:use-module (edict features nonguix)
   #:use-module (edict features nvidia)
@@ -34,6 +35,7 @@
    (nonguix-feature)            ;; non-free kernel + substitutes
    (nvidia-feature)             ;; NVIDIA proprietary GPU driver
    (desktop-feature)            ;; seat, D-Bus, PolicyKit, storage, power
+   (gc-feature)                 ;; Nightly garbage collection cron job
    (networking-feature)         ;; NetworkManager, Wi-Fi, Bluetooth, NTP
    (ssh-feature #:port 2222)    ;; OpenSSH daemon
    (base-feature)))             ;; core tools, symlinks, NTFS, cron GC
