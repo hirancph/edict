@@ -11,9 +11,12 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages file-systems)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages vim)
+  #:use-module (guix gexp)
   #:use-module (edict features)
   #:export (base-feature))
 

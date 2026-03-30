@@ -8,12 +8,14 @@
 
 (define-module (edict features desktop)
   #:use-module (gnu services)
+  #:use-module (gnu services base)
   #:use-module (gnu services dbus)
   #:use-module (gnu services desktop)
   #:use-module (gnu services xorg)
   #:use-module (gnu system shadow)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages linux)
   #:use-module (edict features)
   #:export (desktop-feature))
 

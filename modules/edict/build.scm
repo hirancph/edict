@@ -19,6 +19,7 @@
   #:use-module (gnu)
   #:use-module (gnu system)
   #:use-module (gnu system nss)
+  #:use-module (gnu packages linux)
   #:use-module (gnu home)
   #:use-module (gnu home services)
   #:use-module (srfi srfi-1)
@@ -58,7 +59,7 @@ Only bootloader and file-systems are required as machine-specific."
             (extra-accounts (get-extensions composed user-accounts-target)))
        (operating-system
          ;; Kernel — auto-wired from feature values when present
-         (kernel (or kern linux))
+         (kernel (or kern linux-libre))
          (firmware (or fw '()))
          (initrd (or ird (@ (gnu system linux-initrd) base-initrd)))
 

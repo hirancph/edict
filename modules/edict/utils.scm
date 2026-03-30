@@ -8,6 +8,7 @@
 (define-module (edict utils)
   #:use-module (gnu packages)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-13)
   #:export (pkgs
             path-append))
 

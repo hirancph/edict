@@ -25,19 +25,22 @@
 ;; Kernel, firmware, and initrd are automatically wired from the
 ;; nonguix feature's values.  No need to extract them manually.
 
+(define %vessel-keyboard-layout
+  (keyboard-layout "us"))
+
 (edict-operating-system %vessel
 
   (host-name "vessel")
   (timezone  %timezone)
   (locale    %locale)
-  (keyboard-layout (keyboard-layout "us"))
+  (keyboard-layout %vessel-keyboard-layout)
 
   ;; Bootloader — UEFI GRUB, dual-boot with Windows
   (bootloader
    (bootloader-configuration
     (bootloader grub-efi-bootloader)
     (targets '("/boot/efi"))
-    (keyboard-layout (keyboard-layout "us"))))
+    (keyboard-layout %vessel-keyboard-layout)))
 
   ;; File systems — vessel hardware
   (file-systems
