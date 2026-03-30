@@ -6,6 +6,17 @@
 *edict* is a fully declarative GNU Guix system and home configuration
 written entirely in GNU Guile.
 
+* New Here? (3-Day Beginners Start Here!)
+
+If you are brand new to Guix, Guile, or Lisp, **DO NOT START HERE**.
+Please read the beginner guides first. They are written specifically for you!
+
+1. [[file:docs/01-scheme-crash-course.org][01 — Scheme Crash Course for Edict]] (Learn `#:key`, `#t`, and `quasiquoting` in 5 minutes)
+2. [[file:docs/02-edict-architecture.org][02 — Edict Architecture Explained]] (How the Lego blocks fit together)
+3. [[file:docs/03-guix-basics.org][03 — Guix Basics & The Edict Workflow]] (System vs Home, and the Makefile)
+
+---
+
 The centrepiece is a *feature engine*: a lightweight framework where
 self-contained features contribute packages, services, kernel arguments,
 groups, and user accounts to named /extension targets/.  Features

@@ -14,6 +14,22 @@ One file per host, exporting:
 - =%<host>-features= — the list of =edict-feature= values
 - =%<host>= — the composed result (=compose-features=)
 
+* For Beginners: Lists and Composition
+
+In a host file like `vessel.scm`, you will see:
+#+begin_src scheme
+(define %vessel-features
+  (list (desktop-feature) (base-feature)))
+#+end_src
+
+- `list`: Think of this like a shopping list. We are calling the `desktop-feature` command and the `base-feature` command, and putting their results into a basket.
+
+Then you see:
+#+begin_src scheme
+(define %vessel (compose-features %vessel-features))
+#+end_src
+- `compose-features`: This is the Edict engine! It takes your shopping basket, reads the rulebook (Requires/Provides) for every feature, and sorts them into the perfect order. The result is saved in the variable `%vessel`.
+
 * Example
 
 #+begin_src scheme

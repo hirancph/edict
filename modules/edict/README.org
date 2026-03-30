@@ -7,6 +7,22 @@ This is your main Guile namespace: `(edict ...)`.
 Every `.scm` file inside this directory and its subdirectories is a Guile module
 that belongs to the `edict` project.
 
+* For Beginners: What is a Module?
+
+If you open any file in this folder, the very first line is always:
+#+begin_src scheme
+(define-module (edict some-folder some-file))
+#+end_src
+This simply tells Guile (the engine): "Hey, this file is a package of code named exactly where it lives."
+
+Right below it, you will see things like:
+#+begin_src scheme
+  #:use-module (gnu)
+  #:export (my-thing)
+#+end_src
+- `#:use-module` means "I need to borrow tools from another file to do my work".
+- `#:export` means "I am making this specific tool available so *other* files can borrow it from me".
+
 * Structure
 
 #+begin_example

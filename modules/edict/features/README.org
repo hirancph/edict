@@ -19,6 +19,22 @@ Each feature module should:
 4. Validate all keyword arguments with =ensure-pred=
 5. Set an appropriate =#:scope= (='system=, ='home=, or ='both=)
 
+* For Beginners: Reading a Feature File
+
+If you open a feature file (like `base.scm`), you will see a function definition that looks like this:
+#+begin_src scheme
+(define* (base-feature #:key (gc-days 30))
+#+end_src
+
+- `define*`: The `*` just means "this function accepts optional keyword arguments".
+- `#:key`: This means any argument after this is an optional keyword. So when someone uses this feature, they can optionally say `#:gc-days 15`. If they don't, it defaults to `30`.
+
+Inside the function, you will see `ensure-pred`:
+#+begin_src scheme
+(ensure-pred integer? gc-days)
+#+end_src
+This simply checks that `gc-days` is actually an integer. If a user accidentally typed `#:gc-days "fifteen"`, Guile will throw a helpful error immediately instead of crashing later.
+
 * Constructor Pattern
 
 #+begin_src scheme

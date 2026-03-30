@@ -14,6 +14,22 @@ adding laptops, servers, or VMs in the future.
   users, system packages, and system services
 - One file per host machine
 
+* For Beginners: What is `edict-operating-system`?
+
+In `systems/vessel.scm`, you will see:
+#+begin_src scheme
+(edict-operating-system %vessel
+  (host-name "vessel")
+  (file-systems ...))
+#+end_src
+
+This looks like a function call, but it's actually a **Macro**. 
+A macro is code that writes code for you. 
+
+When you use `edict-operating-system`, it takes your composed features (`%vessel`), extracts all the packages, services, and kernel arguments that your features asked for, and automatically writes the massive `operating-system` block that Guix expects. 
+
+You only need to define the hardware-specific things here (like your hostname, bootloader, and file systems) because those physical things cannot be abstracted away into reusable features.
+
 * Example
 
 #+begin_src scheme

@@ -1,0 +1,58 @@
+#+title: 03 — Guix Basics & The Edict Workflow
+#+author: hirancph
+
+* Welcome to GNU Guix
+
+GNU Guix is a functional package manager. It is very different from `apt` (Ubuntu) or `pacman` (Arch Linux). 
+
+In Guix, you **do not** run `guix install firefox` to install things globally on your operating system. Instead, your entire operating system is defined by a text file (your Edict configuration!). 
+
+When you want to change your system, you edit your text files, and then tell Guix to "reconfigure" the system based on those files.
+
+* System vs Home
+
+Guix splits your computer into two distinct halves:
+
+1. **System (`guix system`)**: This requires `sudo` (root privileges). It controls the Linux kernel, the bootloader (GRUB), hardware drivers (NVIDIA), system-wide services (SSH), and core packages.
+    - In Edict, this is controlled by files in the `modules/edict/systems/` directory.
+
+2. **Home (`guix home`)**: This DOES NOT require `sudo`. It controls your personal user account—your dotfiles, your custom shell prompt, your user-specific apps (like Emacs, browser, etc.).
+    - In Edict, this is controlled by files in the `modules/edict/home/` directory.
+
+* The Makefile: Your Best Friend
+
+Guix commands are very long and annoying to type.
+For example, to update your system using the Edict custom modules, the real command is:
+`sudo -E guix system reconfigure -L modules/ modules/edict/systems/vessel.scm`
+
+No one wants to type that. That's why Edict includes a `Makefile`. A Makefile is just a list of shortcuts.
+
+**The Workflow:**
+1. You make changes to your Edict `.scm` files.
+2. If you changed something system-level (like adding a kernel or a system service), open your terminal and type:
+   `make system`
+   (It will ask for your sudo password).
+3. If you changed something user-level (like adding a personal app to your home environment), type:
+   `make home`
+   (No password required).
+
+* Channels (And Why We Need Nonguix)
+
+Guix gets its software from "Channels", which are basically software repositories.
+
+By default, Guix ONLY allows 100% Free Software. That means the official Guix channel explicitly bans proprietary hardware drivers (like NVIDIA) and the standard Linux kernel (because it contains non-free proprietary firmware blobs).
+
+Because you have an NVIDIA GPU, your computer literally cannot boot a graphical interface with the default free software kernel.
+
+**The `nonguix` Channel:**
+To solve this, Edict includes a file `channels.scm`. This file tells the `guix pull` command to download software from the `nonguix` repository in addition to the official Guix repository. 
+`nonguix` is a community channel that provides the standard Linux kernel and the proprietary NVIDIA drivers.
+
+When you run `make pull`, it reads `channels.scm` and downloads the latest lists of software from both Guix and nonguix.
+
+* How to keep your system updated
+1. Open terminal.
+2. Run `make pull` (This fetches the latest software versions from the internet).
+3. Run `make system` (This builds your OS with the fresh software).
+4. Run `make home` (This builds your user apps with the fresh software).
+5. If your disk gets full of old versions, run `make gc` (Garbage Collect) to delete old leftover files.
