@@ -3,15 +3,15 @@
 * Purpose
 
 This directory acts as the root of your custom Guile module tree.
-When you pass `-L modules/` to `guix system` or set `GUIX_PACKAGE_PATH` to
+When you pass =-L modules/= to =guix system= or set =GUIX_PACKAGE_PATH= to
 this directory, Guile will look for your modules starting from here.
 
 * What Goes Here
 
 There should only be directories here that represent top-level module
-namespaces. In your case, there is only one namespace: `edict/`.
+namespaces. In your case, there is only one namespace: =edict/=.
 
-You should *not* put `.scm` files directly in `modules/`.
+You should *not* put =.scm= files directly in =modules/=.
 
 #+begin_example
 modules/

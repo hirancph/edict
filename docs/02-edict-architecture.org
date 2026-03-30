@@ -7,13 +7,13 @@ Edict is a modular configuration framework for GNU Guix.
 
 Normally, when you configure a Linux system or GNU Guix, you have a massive file with thousands of lines of code. It becomes impossible to read.
 
-Edict solves this by turning your configuration into **Lego blocks**. We call these blocks **Features**.
+Edict solves this by turning your configuration into *Lego blocks*. We call these blocks *Features*.
 
 * The Lego Blocks: Features
 
 Imagine you are building a Lego house. You have a "Living Room" block, a "Kitchen" block, and a "Roof" block. 
 
-When you want to add Bluetooth, Wi-Fi, and NetworkManager to your computer, you don't write 50 lines of code in your main file. Instead, you just drop the `(networking-feature)` block into your configuration.
+When you want to add Bluetooth, Wi-Fi, and NetworkManager to your computer, you don't write 50 lines of code in your main file. Instead, you just drop the =(networking-feature)= block into your configuration.
 
 All features live in the `modules/edict/features/` directory.
 
@@ -21,7 +21,7 @@ All features live in the `modules/edict/features/` directory.
 
 Some Lego blocks can only be placed on top of other specific blocks. For example, you can't place a Roof block unless you have Walls.
 
-In Edict, features clearly state what they **Provide** and what they **Require**.
+In Edict, features clearly state what they *Provide* and what they *Require*.
 
 #+begin_src scheme
   (edict-feature
@@ -30,17 +30,17 @@ In Edict, features clearly state what they **Provide** and what they **Require**
    #:requires '(base))       ;; I REQUIRE the "base" feature to be installed first
 #+end_src
 
-Because of this, **you never have to worry about what order you list your features in your configuration**. Edict reads the rulebook and automatically sorts the blocks so that the foundation goes first, and the roof goes last. This is called a "Topological Sort" under the hood.
+Because of this, *you never have to worry about what order you list your features in your configuration*. Edict reads the rulebook and automatically sorts the blocks so that the foundation goes first, and the roof goes last. This is called a "Topological Sort" under the hood.
 
 * Extension Targets
 
 When a feature is added to your system, how does it actually tell the operating system what to install?
 
-It contributes to **Targets**. Think of targets as buckets.
-- There is a `system-packages-target` bucket.
-- There is a `Groups-target` bucket.
+It contributes to *Targets*. Think of targets as buckets.
+- There is a =system-packages-target= bucket.
+- There is a =Groups-target= bucket.
 
-When you add the `desktop-feature`, behind the scenes, that feature walks up to the `system-packages-target` bucket and throws `brightnessctl` inside. It walks up to the `groups-target` bucket and throws the "video" and "audio" groups inside.
+When you add the =desktop-feature=, behind the scenes, that feature walks up to the =system-packages-target= bucket and throws =brightnessctl= inside. It walks up to the =groups-target= bucket and throws the "video" and "audio" groups inside.
 
 When Edict builds your actual system, it just pours out all the buckets into the Guix Operating System.
 
@@ -49,7 +49,7 @@ When Edict builds your actual system, it just pours out all the buckets into the
 Sometimes, features need to talk to each other. 
 For example, the `nvidia-feature` needs to tell the rest of the system, "Hey, I am installed!" so that the Desktop environment knows to configure things specially for NVIDIA.
 
-Features can publish **Values**:
+Features can publish *Values*:
 #+begin_src scheme
    #:values `((has-nvidia? . #t))
 #+end_src

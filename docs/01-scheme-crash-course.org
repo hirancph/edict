@@ -3,103 +3,103 @@
 
 * Welcome to Scheme!
 
-If you only know =(+ 1 2) = 3=, don't panic! The GNU Guix configuration language is written in **Guile Scheme**, a dialect of Lisp. 
+If you only know =(+ 1 2) = 3=, don't panic! The GNU Guix configuration language is written in *Guile Scheme*, a dialect of Lisp. 
 
 You don't need to be a master programmer to use Edict. You only need to recognize about 5 specific symbols and patterns. This guide will teach you exactly how to read and write the configuration files in this repository.
 
 * 1. Parentheses and Function Calls
 
-In most languages, calling a function looks like this: `print("hello")`
-In Scheme, the parenthesis goes *before* the function name: `(print "hello")`
+In most languages, calling a function looks like this: =print("hello")=
+In Scheme, the parenthesis goes *before* the function name: =(print "hello")=
 
-Every pair of parentheses `(...)` usually means "run the first thing inside as a command, and give it the rest of the things as arguments."
+Every pair of parentheses =(...)= usually means "run the first thing inside as a command, and give it the rest of the things as arguments."
 
 #+begin_src scheme
   ;; This means: call 'host-name' with the string "vessel"
   (host-name "vessel")
 #+end_src
 
-* 2. Defining Things: `define`
+* 2. Defining Things: =define=
 
-When you want to create a variable or store a value, you use `define`.
+When you want to create a variable or store a value, you use =define=.
 
 #+begin_src scheme
   ;; Make a variable named '%timezone' and set it to "Asia/Kolkata"
   (define %timezone "Asia/Kolkata")
 #+end_src
 
-*(Note: The `%` symbol has no special technical meaning in Scheme. By convention in the Guix community, we put a `%` in front of global variables just so they stand out).*
+*(Note: The =%= symbol has no special technical meaning in Scheme. By convention in the Guix community, we put a =%= in front of global variables just so they stand out).*
 
 * 3. Booleans: True and False
 
 In Scheme, true and false look a little different than `true` or `False` in other languages:
-- True is written as **`#t`**
-- False is written as **`#f`**
+- True is written as =#t=
+- False is written as =#f=
 
 #+begin_src scheme
   ;; An example from our ssh feature:
   (permit-root-login? #f)  ;; "Should root login be permitted? False. No."
 #+end_src
 
-*(Note: The `?` at the end of `permit-root-login?` is just a naming convention. We put `?` at the end of variables or functions that return `#t` or `#f`, so they read like a question).*
+*(Note: The =?= at the end of =permit-root-login?= is just a naming convention. We put =?= at the end of variables or functions that return =#t= or =#f=, so they read like a question).*
 
-* 4. Keywords: `#:key`
+* 4. Keywords: =#:key=
 
-Sometimes functions take a lot of arguments, and it's hard to remember their order. Scheme uses **keywords**, which always start with `#:` (hash-colon).
+Sometimes functions take a lot of arguments, and it's hard to remember their order. Scheme uses *keywords*, which always start with =#:= (hash-colon).
 
 When you use a feature in Edict, you pass options using keywords:
 #+begin_src scheme
   (ssh-feature #:port 2222 #:password-auth? #f)
 #+end_src
-This says: "Run the `ssh-feature` command. Set the `#:port` option to 2222, and the `#:password-auth?` option to false."
+This says: "Run the =ssh-feature= command. Set the =#:port= option to 2222, and the =#:password-auth?= option to false."
 
 * 5. Symbols vs Strings
 
-If you see text wrapped in quotes `"like this"`, it's a **String**. It's just text.
-If you see text with a single quote in front of it `'like-this`, it is a **Symbol**. 
+If you see text wrapped in quotes ="like this"=, it's a *String*. It's just text.
+If you see text with a single quote in front of it ='like-this=, it is a *Symbol*. 
 
 A symbol is basically a lightweight, unique label used by the engine to identify things.
 #+begin_src scheme
   ;; Here, 'networking is a symbol representing the networking feature's name.
   #:requires '(base) 
 #+end_src
-Whenever you name a feature or request a target, you use a quote `'` before it.
+Whenever you name a feature or request a target, you use a quote ='= before it.
 
 * 6. Lists
 
-To group things together, we use the `list` command.
+To group things together, we use the =list= command.
 #+begin_src scheme
   (list 1 2 3)
   (list (nonguix-feature) (desktop-feature) (base-feature))
 #+end_src
 
-* 7. The Scary One: Quasiquoting  `` `((...)) ``
+* 7. The Scary One: Quasiquoting   =`((...))=
 
 In some feature files, you will see something that looks extremely weird:
 #+begin_src scheme
   #:values `((ssh-port . ,port))
 #+end_src
 
-Let's break this down. It's called **quasiquoting**.
+Let's break this down. It's called *quasiquoting*.
 
-1. The backwards tick **`** (next to the 1 key on your keyboard) means: "Treat everything inside the next parentheses as plain data, do not try to run it as a command."
-2. The comma **,** means: "Wait! Temporarily stop treating this as plain data, and evaluate *just this one variable*."
+1. The backwards tick *`* (next to the 1 key on your keyboard) means: "Treat everything inside the next parentheses as plain data, do not try to run it as a command."
+2. The comma *,* means: "Wait! Temporarily stop treating this as plain data, and evaluate *just this one variable*."
 
-So in `((ssh-port . ,port))`
-- `ssh-port` is treated as a plain symbol (because of the backtick).
-- `,port` tells Scheme to inject the actual numerical value of the `port` variable you provided. 
+So in =((ssh-port . ,port))=
+- =ssh-port= is treated as a plain symbol (because of the backtick).
+- =,port= tells Scheme to inject the actual numerical value of the =port= variable you provided. 
 
-*(Note: The dot `.` between them just means "pair these two things together". It creates a key-value pair).*
+*(Note: The dot =.= between them just means "pair these two things together". It creates a key-value pair).*
 
 * Summary Cheatsheet
 
-| If you see... | It means... |
-|---------------|-------------|
-| `(foo bar)`   | Run the `foo` command on `bar`. |
-| `#t` or `#f`  | True or False. |
-| `#:port`      | A keyword to specify an option. |
-| `'desktop`    | A symbol (a label). |
-| `,(var)`      | Inject the value of `var` into data (requires a backtick `` ` `` earlier). |
-| `;`           | A comment. Guile ignores anything after a semicolon. |
+| If you see... | It means...                                                                |
+|---------------+----------------------------------------------------------------------------|
+| =(foo bar)=     | Run the =foo= command on =bar=.                                                |
+| =#t= or =#f=      | True or False.                                                             |
+| =#:port=      | A keyword to specify an option.                                            |
+| ='desktop=    | A symbol (a label).                                                        |
+| =,(var)=      | Inject the value of `var` into data (requires a backtick `` ` `` earlier). |
+| =;=           | A comment. Guile ignores anything after a semicolon.                       |
 
 That is honestly 95% of the Scheme you need to read and edit the Edict configuration!
