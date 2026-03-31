@@ -19,6 +19,7 @@
   #:use-module (gnu)
   #:use-module (gnu system)
   #:use-module (gnu system nss)
+  #:use-module (gnu packages)
   #:use-module (gnu packages linux)
   #:use-module (gnu home)
   #:use-module (gnu home services)
@@ -28,6 +29,15 @@
   #:export (edict-operating-system
             edict-home-environment))
 
+;; ═══════════════════════════════════════════════════════════════════
+;; Shared Helpers
+;; ═══════════════════════════════════════════════════════════════════
+
+(define (resolve-package p)
+  "Convert strings to packages if needed, otherwise return the package."
+  (if (string? p)
+      (specification->package p)
+      p))
 
 ;; ═══════════════════════════════════════════════════════════════════
 ;; Operating System Builder
@@ -88,7 +98,7 @@ Only bootloader and file-systems are required as machine-specific."
          (groups
           (append (get-extensions composed groups-target) %base-groups))
          (packages
-          (append (get-extensions composed system-packages-target)
+          (append (map resolve-package (get-extensions composed system-packages-target))
                   %base-packages))
          (services
           (append %base-services
@@ -114,6 +124,6 @@ Trailing FIELD forms are spliced directly into the home-environment."
     ((_ composed-expr field ...)
      (let ((composed composed-expr))
        (home-environment
-         (packages (get-extensions composed home-packages-target))
+         (packages (map resolve-package (get-extensions composed home-packages-target)))
          (services (get-extensions composed home-services-target))
          field ...)))))

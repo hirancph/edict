@@ -13,7 +13,6 @@
   #:use-module (gnu services desktop)
   #:use-module (gnu services xorg)
   #:use-module (gnu system shadow)
-  #:use-module (gnu packages gnome)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages linux)
   #:use-module (edict features)
@@ -42,7 +41,7 @@ upower, fontconfig, XWayland socket, and brightness control."
            (append '("audio" "video" "input" "realtime") extra-user-groups))
 
     (contribute system-packages-target
-                gvfs brightnessctl)
+                "gvfs" "brightnessctl")
 
     (contribute system-services-target
                 (service elogind-service-type)

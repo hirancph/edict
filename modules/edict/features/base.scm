@@ -10,12 +10,7 @@
   #:use-module (gnu services base)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages certs)
-  #:use-module (gnu packages nss)
   #:use-module (gnu packages linux)
-  #:use-module (gnu packages file-systems)
-  #:use-module (gnu packages version-control)
-  #:use-module (gnu packages vim)
   #:use-module (guix gexp)
   #:use-module (edict features)
   #:export (base-feature))
@@ -39,7 +34,7 @@
            (append '("wheel" "kvm") extra-user-groups))
 
     (apply contribute system-packages-target
-           (append (list git vim ntfs-3g exfat-utils fuse-exfat)
+           (append (list "git" "vim" "ntfs-3g" "exfat-utils" "fuse-exfat")
                    extra-packages))
 
     (contribute system-services-target
