@@ -6,7 +6,6 @@
   #:use-module (gnu services)
   #:use-module (gnu services desktop)
   #:use-module (gnu services xorg)
-  #:use-module (gnu services display-managers) ; if present in newer Guix
   #:use-module (edict features)
   #:export (gnome-feature))
 
