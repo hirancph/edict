@@ -34,7 +34,7 @@
            (append '("wheel" "kvm") extra-user-groups))
 
     (apply contribute system-packages-target
-           (append (list "git" "vim" "ntfs-3g" "exfat-utils" "fuse-exfat")
+           (append (list "git" "vim" "make" "ntfs-3g" "exfat-utils" "fuse-exfat")
                    extra-packages))
 
     (contribute system-services-target
