@@ -13,25 +13,28 @@ MODULES_DIR := $(GUIX_CONFIG_DIR)/modules
 # Default host system config — change this or override with: make system HOST=laptop
 HOST ?= vessel
 
+# Extra arguments for guix commands — e.g., make system ARGS="--dry-run"
+ARGS ?=
+
 export GUIX_PACKAGE_PATH := $(MODULES_DIR)
 
 .PHONY: pull system home deploy gc check repl
 
 ## Pull latest channel updates
 pull:
-	guix pull -C $(GUIX_CONFIG_DIR)/channels.scm
+	guix pull -C $(GUIX_CONFIG_DIR)/channels.scm $(ARGS)
 
 ## Reconfigure the operating system
 system:
 	sudo -E guix system reconfigure \
 		-L $(MODULES_DIR) \
-		$(MODULES_DIR)/edict/systems/$(HOST).scm
+		$(MODULES_DIR)/edict/systems/$(HOST).scm $(ARGS)
 
 ## Reconfigure the home environment
 home:
 	guix home reconfigure \
 		-L $(MODULES_DIR) \
-		$(MODULES_DIR)/edict/home/$(HOST).scm
+		$(MODULES_DIR)/edict/home/$(HOST).scm $(ARGS)
 
 ## Reconfigure both system and home
 deploy: system home
