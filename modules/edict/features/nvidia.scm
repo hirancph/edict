@@ -41,8 +41,6 @@ System-scope only."
             (if blacklist-nouveau? '("modprobe.blacklist=nouveau") '())
             (if modesetting? '("nvidia_drm.modeset=1") '())))
 
-    (contribute kernel-modules-target driver)
-
     (contribute system-services-target
      (service nvidia-service-type)
      (service kernel-module-loader-service-type
