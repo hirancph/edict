@@ -39,9 +39,10 @@
 
     (contribute system-services-target
      ;; FHS compatibility symlinks
-     (service special-files-service-type
-              `(("/bin/bash"    ,(file-append bash "/bin/bash"))
-                ("/usr/bin/env" ,(file-append coreutils "/bin/env"))))
+     (simple-service 'fhs-symlinks
+                     special-files-service-type
+                     `(("/bin/bash"    ,(file-append bash "/bin/bash"))
+                       ("/usr/bin/env" ,(file-append coreutils "/bin/env"))))
 
      ;; NTFS udev rules for non-root mounting
      (simple-service 'ntfs-mount-rules udev-service-type (list ntfs-3g))))))
