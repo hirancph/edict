@@ -9,8 +9,17 @@
   #:use-module (edict features)
   #:export (gnome-feature))
 
-(define* (gnome-feature)
-  "GNOME Desktop Environment with GDM."
+(define* (gnome-feature #:key
+                        (wayland? #f)
+                        (auto-suspend? #f))
+  "GNOME Desktop Environment with GDM.
+WAYLAND? — enable Wayland in GDM (default: #f for VM compatibility).
+AUTO-SUSPEND? — let GNOME auto-suspend the machine (default: #f)."
+
+  ;; ── Validation ──
+  (ensure-pred boolean? wayland?)
+  (ensure-pred boolean? auto-suspend?)
+
   (edict-feature
    #:name 'gnome
    #:provides '(gnome desktop-environment)
@@ -19,4 +28,7 @@
    (list
     (contribute system-services-target
                 (service gnome-desktop-service-type)
-                (service gdm-service-type)))))
+                (service gdm-service-type
+                         (gdm-configuration
+                          (wayland? wayland?)
+                          (auto-suspend? auto-suspend?)))))))
