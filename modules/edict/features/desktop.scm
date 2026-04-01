@@ -2,23 +2,26 @@
 ;;;
 ;;; desktop.scm — Desktop session and seat management feature.
 ;;;
-;;; When a desktop-environment (like GNOME) is active, `%desktop-services`
-;;; provides elogind, dbus, polkit, GDM, udisks, upower, fontconfig, etc.
-;;; This feature contributes only what is NOT already covered:
-;;; user groups, packages, the realtime group, and X11 socket setup.
+;;; Everything a graphical desktop needs before a window manager:
+;;; login sessions, the system bus, authorisation, storage mounting,
+;;; power info, font caching, and the X11 compatibility socket.
 
 (define-module (edict features desktop)
   #:use-module (gnu services)
+  #:use-module (gnu services base)
+  #:use-module (gnu services dbus)
+  #:use-module (gnu services desktop)
+  #:use-module (gnu services xorg)
   #:use-module (gnu system shadow)
+  #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages linux)
   #:use-module (edict features)
   #:export (desktop-feature))
 
 (define* (desktop-feature #:key
                           (extra-user-groups '()))
-  "Desktop session essentials: user groups, packages, realtime audio group,
-and the X11 compatibility socket.  Core desktop services (elogind, dbus,
-polkit, udisks, upower) are provided by %desktop-services when a
-desktop-environment feature is active."
+  "Desktop session essentials: elogind, D-Bus, PolicyKit, udisks,
+upower, fontconfig, XWayland socket, and brightness control."
 
   ;; ── Validation ──
   (ensure-pred list? extra-user-groups)
@@ -38,5 +41,17 @@ desktop-environment feature is active."
            (append '("audio" "video" "input" "realtime") extra-user-groups))
 
     (contribute system-packages-target
-                "gvfs" "brightnessctl"))))
+                "gvfs" "brightnessctl")
+
+    (contribute system-services-target
+                (service elogind-service-type)
+                (service dbus-root-service-type)
+                (service polkit-service-type)
+                polkit-wheel-service
+                (service udisks-service-type)
+                (service upower-service-type)
+                fontconfig-file-system-service
+                (service x11-socket-directory-service-type)
+                (udev-rules-service 'brightnessctl-udev-rules brightnessctl)))))
+
 

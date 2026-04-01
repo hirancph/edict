@@ -17,6 +17,7 @@
 
 (define-module (edict build)
   #:use-module (gnu)
+  #:use-module (gnu services)
   #:use-module (gnu system)
   #:use-module (gnu system nss)
   #:use-module (gnu services desktop)
@@ -39,6 +40,18 @@
   (if (string? p)
       (specification->package p)
       p))
+
+(define (deduplicate-services services)
+  "Filter a list of services, keeping only the LAST occurrence of each service type.
+This allows composed features to safely include %desktop-services while
+individual features (like networking or desktop) contribute their own variants."
+  (fold (lambda (svc acc)
+          (let ((kind (service-kind svc)))
+            (if (find (lambda (s) (eq? (service-kind s) kind)) acc)
+                acc
+                (cons svc acc))))
+        '()
+        (reverse services)))
 
 ;; ═══════════════════════════════════════════════════════════════════
 ;; Operating System Builder
@@ -111,8 +124,9 @@ Only bootloader and file-systems are required as machine-specific."
                 (append (map resolve-package (get-extensions composed system-packages-target))
                         %base-packages))
                (services
-                (append base-services
-                        (get-extensions composed system-services-target)))
+                (deduplicate-services
+                 (append base-services
+                         (get-extensions composed system-services-target))))
                (name-service-switch %mdns-host-lookup-nss)
 
                ;; Machine-specific overrides come last and win:
