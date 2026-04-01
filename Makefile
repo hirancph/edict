@@ -27,6 +27,7 @@ pull:
 ## Reconfigure the operating system
 system:
 	sudo -E guix system reconfigure \
+		--substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://substitutes.nonguix.org" \
 		-L $(MODULES_DIR) \
 		$(MODULES_DIR)/edict/systems/$(HOST).scm $(ARGS)
 
