@@ -15,7 +15,7 @@
   #:export (nvidia-feature))
 
 (define* (nvidia-feature #:key
-                         (driver nvidia-driver)
+                         (driver nvda)
                          (modesetting? #t)
                          (s0ix-power-management? #t)
                          (configure-xorg? #t))
