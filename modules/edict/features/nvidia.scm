@@ -75,17 +75,5 @@ System-scope only."
                                         (one-shot? #t)
                                         (start #~(lambda _
                                                    (zero? (system* #$(file-append nvda "/bin/nvidia-smi")
-                                                                   "-pm" "1")))))))
-
-                 ;; Sleep hook — tells the GPU to save/restore VRAM
-                 ;; on suspend/hibernate/resume.
-                 (extra-special-file "/etc/elogind/system-sleep/nvidia"
-                                    (computed-file "nvidia-sleep"
-                                      #~(begin
-                                          (call-with-output-file #$output
-                                            (lambda (port)
-                                              (display "#!/bin/sh\ncase $1 in\n  pre)\n    case $2 in\n      suspend) echo suspend > /proc/driver/nvidia/suspend ;;\n      hibernate) echo hibernate > /proc/driver/nvidia/suspend ;;\n    esac\n    ;;\n  post)\n    echo resume > /proc/driver/nvidia/suspend\n    ;;\nesac\n" port)))
-                                          (chmod #$output #o755)))))
+                                                                   "-pm" "1"))))))))
                 '()))))))
-
-
