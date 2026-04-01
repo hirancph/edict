@@ -27,6 +27,7 @@
   #:use-module (gnu home)
   #:use-module (gnu home services)
   #:use-module (srfi srfi-1)
+  #:use-module (ice-9 match)
   #:use-module (edict config)
   #:use-module (edict features)
   #:export (edict-operating-system
@@ -43,16 +44,48 @@
       p))
 
 (define (merge-services base-services feature-services)
-  "Merge base and feature services. If feature-services provides a service
-of a specific type, it completely overrides the base service of that type.
+  "Merge base and feature services gracefully.
+If feature-services provides a service of a specific type, it overrides
+the base service of that type.
+If multiple features provide the same service kind, they are merged if
+identical or default, otherwise an explicit error is raised.
 Exception: mingetty-service-type is preserved since it must exist multiple times."
-  (let ((feature-kinds (map service-kind feature-services)))
+  (define (deduplicate-services services)
+    (fold (lambda (new-svc acc)
+            (let ((dup-svc (find (lambda (s) 
+                                   (and (eq? (service-kind new-svc) (service-kind s))
+                                        (not (eq? (service-kind new-svc) mingetty-service-type))))
+                                 acc)))
+              (if dup-svc
+                  (cond
+                   ;; Exact match, keep one
+                   ((equal? (service-value new-svc) (service-value dup-svc))
+                    acc)
+                   ;; New is default, keep old
+                   ((equal? (service-type-default-value (service-kind new-svc))
+                            (service-value new-svc))
+                    acc)
+                   ;; Old is default, keep new
+                   ((equal? (service-type-default-value (service-kind dup-svc))
+                            (service-value dup-svc))
+                    (cons new-svc (remove (lambda (s) (eq? s dup-svc)) acc)))
+                   ;; Conflict
+                   (else
+                    (error (format #f "edict: unresolvable duplicate service provided by multiple features: ~s"
+                                   (service-kind new-svc)))))
+                  ;; No duplicate, just cons
+                  (cons new-svc acc))))
+          '()
+          services))
+
+  (let* ((clean-feature-services (reverse (deduplicate-services feature-services)))
+         (feature-kinds (map service-kind clean-feature-services)))
     (append
      (remove (lambda (svc)
                (and (memq (service-kind svc) feature-kinds)
                     (not (eq? (service-kind svc) mingetty-service-type))))
              base-services)
-     feature-services)))
+     clean-feature-services)))
 
 ;; ═══════════════════════════════════════════════════════════════════
 ;; Operating System Builder

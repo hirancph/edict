@@ -228,27 +228,14 @@ feature providing the original value before composing."
                                  (or (eq? s 'both) (eq? s scope))))
                              features)))
          (sorted (tsort scoped))
-         (all-values (append-map edict-feature-values sorted)))
-
-    ;; Check for duplicate value keys
-    (let check ((remaining all-values)
-                (seen '()))
-      (unless (null? remaining)
-        (let ((key (caar remaining)))
-          (when (assq key seen)
-            (let* ((first-feature
-                    (find (lambda (f) (assq key (edict-feature-values f))) sorted))
-                   (second-feature
-                    (find (lambda (f)
-                            (and (not (eq? f first-feature))
-                                 (assq key (edict-feature-values f))))
-                          sorted)))
-              (error (format #f "edict: duplicate value key '~a' — provided by both '~a' and '~a'. Use modify-features to resolve."
-                             key
-                             (edict-feature-name first-feature)
-                             (edict-feature-name second-feature)))))
-          (check (cdr remaining)
-                 (cons (car remaining) seen)))))
+         ;; Extract values. By reversing `sorted` first, downstream features
+         ;; appear at the head of the list. delete-duplicates keeps the first
+         ;; occurrence of each key, allowing downstream to safely shadow upstream.
+         (all-values
+          (delete-duplicates
+           (append-map edict-feature-values (reverse sorted))
+           (lambda (pair1 pair2)
+             (eq? (car pair1) (car pair2))))))
 
     (%make-composed-features
      sorted
