@@ -19,6 +19,7 @@
   #:use-module (gnu)
   #:use-module (gnu system)
   #:use-module (gnu system nss)
+  #:use-module (gnu services desktop)
   #:use-module (gnu packages)
   #:use-module (gnu packages linux)
   #:use-module (gnu home)
@@ -68,7 +69,14 @@ Only bootloader and file-systems are required as machine-specific."
             (ird  (get-value 'initrd composed #f))
             (extra-accounts (get-extensions composed user-accounts-target))
             (transformations (get-extensions composed os-transformations-target)))
-       (fold (lambda (proc os) (proc os))
+       ;; Determine if a desktop environment is active.
+       ;; When true, use %desktop-services (includes GDM, dbus, polkit, etc.)
+       ;; instead of the minimal %base-services.
+       (let ((has-de? (get-value 'has-desktop-environment? composed #f))
+             (base-services (if (get-value 'has-desktop-environment? composed #f)
+                                %desktop-services
+                                %base-services)))
+        (fold (lambda (proc os) (proc os))
              (operating-system
                ;; Kernel — auto-wired from feature values when present
                (kernel (or kern linux-libre))
@@ -103,13 +111,13 @@ Only bootloader and file-systems are required as machine-specific."
                 (append (map resolve-package (get-extensions composed system-packages-target))
                         %base-packages))
                (services
-                (append %base-services
+                (append base-services
                         (get-extensions composed system-services-target)))
                (name-service-switch %mdns-host-lookup-nss)
 
                ;; Machine-specific overrides come last and win:
                field ...)
-             transformations)))))
+             transformations))))))
 
 
 ;; ═══════════════════════════════════════════════════════════════════
