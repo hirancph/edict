@@ -86,5 +86,6 @@ System-scope only."
                                             (lambda (port)
                                               (display "#!/bin/sh\ncase $1 in\n  pre)\n    case $2 in\n      suspend) echo suspend > /proc/driver/nvidia/suspend ;;\n      hibernate) echo hibernate > /proc/driver/nvidia/suspend ;;\n    esac\n    ;;\n  post)\n    echo resume > /proc/driver/nvidia/suspend\n    ;;\nesac\n" port)))
                                           (chmod #$output #o755)))))
-                '())))))
+                '()))))))
+
 
