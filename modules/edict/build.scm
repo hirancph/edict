@@ -18,6 +18,7 @@
 (define-module (edict build)
   #:use-module (gnu)
   #:use-module (gnu services)
+  #:use-module (gnu services base)
   #:use-module (gnu system)
   #:use-module (gnu system nss)
   #:use-module (gnu services desktop)
@@ -41,17 +42,17 @@
       (specification->package p)
       p))
 
-(define (deduplicate-services services)
-  "Filter a list of services, keeping only the LAST occurrence of each service type.
-This allows composed features to safely include %desktop-services while
-individual features (like networking or desktop) contribute their own variants."
-  (fold (lambda (svc acc)
-          (let ((kind (service-kind svc)))
-            (if (find (lambda (s) (eq? (service-kind s) kind)) acc)
-                acc
-                (cons svc acc))))
-        '()
-        (reverse services)))
+(define (merge-services base-services feature-services)
+  "Merge base and feature services. If feature-services provides a service
+of a specific type, it completely overrides the base service of that type.
+Exception: mingetty-service-type is preserved since it must exist multiple times."
+  (let ((feature-kinds (map service-kind feature-services)))
+    (append
+     (remove (lambda (svc)
+               (and (memq (service-kind svc) feature-kinds)
+                    (not (eq? (service-kind svc) mingetty-service-type))))
+             base-services)
+     feature-services)))
 
 ;; ═══════════════════════════════════════════════════════════════════
 ;; Operating System Builder
@@ -124,9 +125,9 @@ Only bootloader and file-systems are required as machine-specific."
                 (append (map resolve-package (get-extensions composed system-packages-target))
                         %base-packages))
                (services
-                (deduplicate-services
-                 (append base-services
-                         (get-extensions composed system-services-target))))
+                (merge-services
+                 base-services
+                 (get-extensions composed system-services-target)))
                (name-service-switch %mdns-host-lookup-nss)
 
                ;; Machine-specific overrides come last and win:
