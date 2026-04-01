@@ -34,7 +34,7 @@ System-scope only."
    #:extensions
    (list
     (contribute os-transformations-target
-                (nonguix-transformation-linux #:kernel kernel
+                (nonguix-transformation-linux #:linux kernel
                                               #:firmware firmware
                                               #:initrd initrd))
 
