@@ -30,6 +30,7 @@
             groups-target
             user-groups-target
             user-accounts-target
+            os-transformations-target
 
             ;; Feature record
             edict-feature
@@ -84,6 +85,7 @@
 (define groups-target            'groups)
 (define user-groups-target       'user-groups)
 (define user-accounts-target     'user-accounts)
+(define os-transformations-target 'os-transformations)
 
 ;; ═══════════════════════════════════════════════════════════════════
 ;; Validation

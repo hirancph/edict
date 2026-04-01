@@ -2,35 +2,32 @@
 ;;;
 ;;; nvidia.scm — NVIDIA proprietary driver feature for Guix System.
 ;;;
-;;; Full RTX 3060 support: kernel args, loadable modules, persistence
-;;; mode, VRAM preservation across suspend/resume, and sleep hooks.
-;;; Modeled after nehrbash's proven RTX 3070 setup.
+;;; Applies the official nonguix-transformation-nvidia which safely
+;;; grafts the proprietary driver into mesa, configures the kernel arguments,
+;;; and sets up the correct graphics services automatically.
 
 (define-module (edict features nvidia)
   #:use-module (gnu services)
-  #:use-module (gnu services base)
-  #:use-module (gnu services linux)
-  #:use-module (gnu services shepherd)
-  #:use-module (guix gexp)
   #:use-module (nongnu packages nvidia)
   #:use-module (nongnu services nvidia)
+  #:use-module (nonguix transformations)
   #:use-module (edict features)
   #:export (nvidia-feature))
 
 (define* (nvidia-feature #:key
                          (driver nvidia-driver)
                          (modesetting? #t)
-                         (blacklist-nouveau? #t)
-                         (preserve-video-memory? #t))
-  "NVIDIA proprietary GPU driver — kernel args, loadable modules,
-persistence mode, VRAM preservation, and suspend/resume hooks.
-Publishes 'has-nvidia? so other features (e.g. Hyprland, GNOME) can adapt.
-System-scope only."
+                         (s0ix-power-management? #t)
+                         (configure-xorg? #t))
+  "NVIDIA proprietary GPU driver.
+Applies the official nonguix transformation for NVIDIA, grafting the
+correct driver into all packages and configuring the display stack.
+Publishes 'has-nvidia? so other features can adapt. System-scope only."
 
   ;; ── Validation ──
   (ensure-pred boolean? modesetting?)
-  (ensure-pred boolean? blacklist-nouveau?)
-  (ensure-pred boolean? preserve-video-memory?)
+  (ensure-pred boolean? s0ix-power-management?)
+  (ensure-pred (lambda (x) (or (boolean? x) (symbol? x))) configure-xorg?)
 
   (edict-feature
    #:name 'nvidia
@@ -43,37 +40,8 @@ System-scope only."
    (list
     (contribute user-groups-target "video")
 
-    (apply contribute kernel-arguments-target
-           (append
-            (if blacklist-nouveau? '("modprobe.blacklist=nouveau") '())
-            (if modesetting? '("nvidia_drm.modeset=1") '())
-            '("nvidia_modeset.vblank_sem_control=0")
-            (if preserve-video-memory?
-                '("nvidia.NVreg_PreserveVideoMemoryAllocations=1"
-                  "nvidia.NVreg_TemporaryFilePath=/var/tmp")
-                '())))
-
-    (apply contribute system-services-target
-           (append
-            (list
-             (service nvidia-service-type)
-             (service kernel-module-loader-service-type
-                      '("nvidia"
-                        "nvidia_modeset"
-                        "nvidia_uvm"
-                        "nvidia_drm")))
-
-            ;; nvidia-smi persistence mode — keeps the driver loaded
-            ;; so VRAM preservation actually works across suspend.
-            (if preserve-video-memory?
-                (list
-                 (simple-service 'nvidia-persistence
-                                 shepherd-root-service-type
-                                 (list (shepherd-service
-                                        (provision '(nvidia-persistence))
-                                        (requirement '(udev))
-                                        (one-shot? #t)
-                                        (start #~(lambda _
-                                                   (zero? (system* #$(file-append nvda "/bin/nvidia-smi")
-                                                                   "-pm" "1"))))))))
-                '()))))))
+    (contribute os-transformations-target
+                (nonguix-transformation-nvidia #:driver driver
+                                               #:kernel-mode-setting? modesetting?
+                                               #:s0ix-power-management? s0ix-power-management?
+                                               #:configure-xorg? configure-xorg?)))))

@@ -66,47 +66,50 @@ Only bootloader and file-systems are required as machine-specific."
             (kern (get-value 'kernel composed #f))
             (fw   (get-value 'firmware composed #f))
             (ird  (get-value 'initrd composed #f))
-            (extra-accounts (get-extensions composed user-accounts-target)))
-       (operating-system
-         ;; Kernel — auto-wired from feature values when present
-         (kernel (or kern linux-libre))
-         (firmware (or fw '()))
-         (initrd (or ird (@ (gnu system linux-initrd) base-initrd)))
+            (extra-accounts (get-extensions composed user-accounts-target))
+            (transformations (get-extensions composed os-transformations-target)))
+       (fold (lambda (proc os) (proc os))
+             (operating-system
+               ;; Kernel — auto-wired from feature values when present
+               (kernel (or kern linux-libre))
+               (firmware (or fw %base-firmware))
+               (initrd (or ird (@ (gnu system linux-initrd) base-initrd)))
 
-         ;; Auto-wired from composed features:
-         (kernel-arguments
-          (append (get-extensions composed kernel-arguments-target)
-                  %default-kernel-arguments))
-         (kernel-loadable-modules
-          (get-extensions composed kernel-modules-target))
+               ;; Auto-wired from composed features:
+               (kernel-arguments
+                (append (get-extensions composed kernel-arguments-target)
+                        %default-kernel-arguments))
+               (kernel-loadable-modules
+                (get-extensions composed kernel-modules-target))
 
-         ;; User accounts — default user + any feature-contributed accounts
-         (users
-          (append
-           (list (user-account
-                  (name %user-name)
-                  (comment %full-name)
-                  (group "users")
-                  (home-directory (string-append "/home/" %user-name))
-                  (supplementary-groups
-                   (delete-duplicates
-                    (get-extensions composed user-groups-target)
-                    string=?))))
-           extra-accounts
-           %base-user-accounts))
+               ;; User accounts — default user + any feature-contributed accounts
+               (users
+                (append
+                 (list (user-account
+                        (name %user-name)
+                        (comment %full-name)
+                        (group "users")
+                        (home-directory (string-append "/home/" %user-name))
+                        (supplementary-groups
+                         (delete-duplicates
+                          (get-extensions composed user-groups-target)
+                          string=?))))
+                 extra-accounts
+                 %base-user-accounts))
 
-         (groups
-          (append (get-extensions composed groups-target) %base-groups))
-         (packages
-          (append (map resolve-package (get-extensions composed system-packages-target))
-                  %base-packages))
-         (services
-          (append %base-services
-                  (get-extensions composed system-services-target)))
-         (name-service-switch %mdns-host-lookup-nss)
+               (groups
+                (append (get-extensions composed groups-target) %base-groups))
+               (packages
+                (append (map resolve-package (get-extensions composed system-packages-target))
+                        %base-packages))
+               (services
+                (append %base-services
+                        (get-extensions composed system-services-target)))
+               (name-service-switch %mdns-host-lookup-nss)
 
-         ;; Machine-specific overrides come last and win:
-         field ...)))))
+               ;; Machine-specific overrides come last and win:
+               field ...)
+             transformations)))))
 
 
 ;; ═══════════════════════════════════════════════════════════════════
