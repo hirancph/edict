@@ -127,10 +127,12 @@ version built from a local checkout.")
          (string-append "-DVERSION=" #$version)
          "-DGIT_REVISION=local")))
     (native-inputs
-     (list pkg-config))
+     (list pkg-config
+           qtshadertools))
     (inputs
      (list qtbase
            qtdeclarative
+           qtsvg
            libqalculate
            gmp
            mpfr
