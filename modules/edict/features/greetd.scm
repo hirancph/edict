@@ -35,8 +35,7 @@ Provides a clean TUI login that discovers Wayland sessions
    #:extensions
    (list
     ;; tuigreet must be in system packages so greetd can execute it.
-    (contribute system-packages-target
-                "greetd" "greetd-tuigreet")
+    (contribute system-packages-target tuigreet)
 
     (contribute system-services-target
      (service greetd-service-type
