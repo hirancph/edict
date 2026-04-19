@@ -15,6 +15,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages wm)
   #:use-module (guix gexp)
+  #:use-module (srfi srfi-1)
   #:use-module (edict features)
   #:export (greetd-feature))
 
