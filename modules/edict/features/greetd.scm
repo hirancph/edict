@@ -7,6 +7,8 @@
 ;;; directory and remembers the last selection.
 
 (define-module (edict features greetd)
+  #:use-module (gnu)
+  #:use-module (gnu system)
   #:use-module (gnu services)
   #:use-module (gnu services base)
   #:use-module (gnu services xorg)
