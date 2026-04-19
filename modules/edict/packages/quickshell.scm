@@ -17,6 +17,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (gnu packages audio)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages jemalloc)
