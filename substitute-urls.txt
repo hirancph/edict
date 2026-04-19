@@ -2,6 +2,13 @@
 # Lines starting with # are comments.
 # Edit this file to add/remove mirrors — takes effect on the next `make` target.
 
-https://ci.guix.gnu.org
+# Asia / nearest mirrors
+https://bordeaux-singapore-mirror.cbaines.net
+https://cache-cdn.guix.moe
+
+# Official build farms
 https://bordeaux.guix.gnu.org
+https://ci.guix.gnu.org
+
+# Nonguix (proprietary packages)
 https://substitutes.nonguix.org
