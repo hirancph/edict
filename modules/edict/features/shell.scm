@@ -94,4 +94,4 @@ EXTRA-PATH — additional directories prepended to $PATH."
                  ;; fzf-tab must load after compinit (which runs in zshrc)
                  (mixed-text-file "zsh-fzf-tab"
                   "source " fzf-tab
-                  "/share/zsh/plugins/fzf-tab/fzf-tab.zsh\n"))))))))
+                  "/share/zsh/plugins/fzf-tab/fzf-tab.zsh\n")))))))))
