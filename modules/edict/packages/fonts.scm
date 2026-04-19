@@ -40,16 +40,18 @@ corners, designed by Hubert and Fischer, Meir Sadan, Cyreal.")
 (define-public font-material-symbols-rounded
   (package
     (name "font-material-symbols-rounded")
-    (version "2024")
+    (version "2024.12.12")
     (source
      (origin
        (method url-fetch)
+       ;; Pinned to commit d04e2bf to avoid hash drift on master.
        (uri (string-append
-             "https://github.com/google/material-design-icons/raw/master/"
+             "https://github.com/google/material-design-icons/raw/"
+             "d04e2bf93fa2e8b7e9e1e9fcc8ab077b97637599/"
              "variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"))
        (file-name (string-append name "-" version ".ttf"))
        (sha256
-        (base32 "0xx86154i43234nh467sjvx1bwpqfr0mm06y4zrz6lf01va2pzvb"))))
+        (base32 "0rh3ks1qgn25z3qqsjxmmsgyruv2sjd4v995znmd860ximsdhndj6"))))
     (build-system font-build-system)
     (arguments
      '(#:phases
