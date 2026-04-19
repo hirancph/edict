@@ -51,7 +51,7 @@ corners, designed by Hubert and Fischer, Meir Sadan, Cyreal.")
              "variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"))
        (file-name (string-append name "-" version ".ttf"))
        (sha256
-        (base32 "0rh3ks1qgn25z3qqsjxmmsgyruv2sjd4v995znmd860ximsdhndj6"))))
+        (base32 "1k6kawlisarg7pghrngj6ma7gd3fm39cccgfqqfr81f4f19n9qj8"))))
     (build-system font-build-system)
     (arguments
      '(#:phases
