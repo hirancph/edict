@@ -45,6 +45,7 @@ POWER-PROFILES? — enable power-profiles-daemon for power management."
    (list
     ;; System group for PipeWire / low-latency audio scheduling.
     (contribute groups-target
+                (user-group (name "seat"))
                 (user-group (system? #t) (name "realtime")))
 
     (apply contribute user-groups-target
