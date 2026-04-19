@@ -1,0 +1,7 @@
+# Substitute server URLs, one per line.
+# Lines starting with # are comments.
+# Edit this file to add/remove mirrors — takes effect on the next `make` target.
+
+https://ci.guix.gnu.org
+https://bordeaux.guix.gnu.org
+https://substitutes.nonguix.org

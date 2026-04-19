@@ -42,6 +42,11 @@
     (targets '("/boot/efi"))
     (keyboard-layout %vessel-keyboard-layout)))
 
+  ;; Swap — prevents OOM kills and enables hibernation
+  (swap-devices
+   (list (swap-space
+          (target "/swapfile"))))
+
   ;; File systems — vessel hardware
   (file-systems
    (cons*

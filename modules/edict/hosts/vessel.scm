@@ -12,14 +12,20 @@
 
 (define-module (edict hosts vessel)
   #:use-module (edict features)
+  #:use-module (edict features audio)
   #:use-module (edict features base)
+  #:use-module (edict features caelestia)
   #:use-module (edict features desktop)
-  #:use-module (edict features gnome)
+  #:use-module (edict features fonts)
   #:use-module (edict features gc)
+  #:use-module (edict features greetd)
+  #:use-module (edict features hyprland)
   #:use-module (edict features networking)
   #:use-module (edict features nonguix)
   #:use-module (edict features nvidia)
+  #:use-module (edict features shell)
   #:use-module (edict features ssh)
+  #:use-module (edict features wayland)
   #:export (%vessel-features
             %vessel))
 
@@ -34,13 +40,20 @@
 (define %vessel-features
   (list
    (nonguix-feature)            ;; non-free kernel + substitutes
-   (nvidia-feature)             ;; NVIDIA proprietary GPU driver
+   (nvidia-feature)             ;; NVIDIA proprietary GPU (w/ suspend hooks)
    (desktop-feature)            ;; seat, D-Bus, PolicyKit, storage, power
-   (gnome-feature)              ;; GNOME Desktop Environment
+   (greetd-feature)             ;; greetd + tuigreet login manager
+   (hyprland-feature)           ;; Hyprland compositor + XDG portals
+   (caelestia-feature)          ;; Caelestia/Quickshell desktop shell
    (gc-feature)                 ;; Nightly garbage collection cron job
    (networking-feature)         ;; NetworkManager, Wi-Fi, Bluetooth, NTP
    (ssh-feature #:port 2222)    ;; OpenSSH daemon
-   (base-feature)))             ;; core tools, symlinks, NTFS, cron GC
+   (audio-feature)              ;; PipeWire + WirePlumber (home service)
+   (fonts-feature)              ;; Curated font stack
+   (shell-feature)              ;; Zsh + plugins + env vars (home service)
+   (wayland-feature              ;; Wayland/Qt/cursor env vars (home service)
+    #:nvidia? #t)
+   (base-feature)))             ;; core tools, FHS, NTFS, quiet boot
 
 
 ;; ═══════════════════════════════════════════════════════════════════

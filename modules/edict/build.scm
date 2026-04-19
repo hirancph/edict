@@ -24,6 +24,7 @@
   #:use-module (gnu services desktop)
   #:use-module (gnu packages)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages shells)
   #:use-module (gnu home)
   #:use-module (gnu home services)
   #:use-module (srfi srfi-1)
@@ -145,6 +146,7 @@ Only bootloader and file-systems are required as machine-specific."
                         (comment %full-name)
                         (group "users")
                         (home-directory (string-append "/home/" %user-name))
+                        (shell (file-append zsh "/bin/zsh"))
                         (supplementary-groups
                          (delete-duplicates
                           (get-extensions composed user-groups-target)

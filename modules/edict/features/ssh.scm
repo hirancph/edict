@@ -35,6 +35,6 @@ System-scope only."
               (openssh-configuration
                (openssh openssh-sans-x)
                (port-number port)
-               (permit-root-login (if permit-root-login? 'yes #f))
+               (permit-root-login (if permit-root-login? #t #f))
                (allow-empty-passwords? #f)
                (password-authentication? password-auth?)))))))

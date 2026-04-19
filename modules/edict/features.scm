@@ -311,7 +311,8 @@ Shows: feature order, all values, and extensions per target."
     (list system-packages-target system-services-target
           home-packages-target home-services-target
           kernel-arguments-target kernel-modules-target
-          groups-target user-groups-target user-accounts-target))
+          groups-target user-groups-target user-accounts-target
+          os-transformations-target))
 
   (section "Edict Composition Report")
 

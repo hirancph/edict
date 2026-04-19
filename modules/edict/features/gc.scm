@@ -31,12 +31,12 @@ GC-DAYS: delete generations older than this.  GC-FREE: minimum free space."
    #:extensions
    (list
     (contribute system-services-target
-     (simple-service 'system-cron-jobs
+     (simple-service 'gc-cron-jobs
                      mcron-service-type
                      (list
                       #~(job "5 0 * * *"
                              (string-append
-                              "guix gc -d "
+                              "guix gc --delete-generations="
                               #$(number->string gc-days)
                               "d -F "
                               #$gc-free))))))))
