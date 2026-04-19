@@ -10,6 +10,7 @@
   #:use-module (gnu services)
   #:use-module (gnu services base)
   #:use-module (gnu services xorg)
+  #:use-module (gnu packages admin)
   #:use-module (gnu packages wm)
   #:use-module (guix gexp)
   #:use-module (edict features)
