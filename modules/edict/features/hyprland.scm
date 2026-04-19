@@ -126,8 +126,7 @@ DesktopNames=Hyprland\n")))
                "hyprpicker"     ;; Color picker
                "wlr-randr"      ;; Wayland display config
                "wtype"          ;; Wayland keyboard input (shift+backspace)
-               "alacritty"      ;; Terminal emulator (default $terminal)
-               "wayfreeze")     ;; Freeze screen for area selection
+               "alacritty")      ;; Terminal emulator (default $terminal)
 
     ;; ── Deploy Hyprland config tree declaratively ──
     ;; Ships the entire files/hypr/ into ~/.config/hypr/
