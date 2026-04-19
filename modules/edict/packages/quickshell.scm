@@ -48,7 +48,7 @@
   (package
     (name "quickshell")
     (version "git")
-    (source (local-file "../../files/quickshell-src"
+    (source (local-file "../../../files/quickshell-src"
                         "quickshell-checkout"
                         #:recursive? #t))
     (build-system cmake-build-system)
@@ -113,7 +113,7 @@ version built from a local checkout.")
     (name "quickshell-caelestia-plugin")
     (version "1.5.0")
     (source
-     (local-file "../../files/quickshell"
+     (local-file "../../../files/quickshell"
                  "caelestia-shell-source"
                  #:recursive? #t))
     (build-system cmake-build-system)

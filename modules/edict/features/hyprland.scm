@@ -31,12 +31,12 @@
 ;; Managed by Guix Home — no manual symlinks needed.
 
 (define %hypr-config-source
-  (local-file "../../files/hypr"
+  (local-file "../../../files/hypr"
               "hypr-config"
               #:recursive? #t))
 
 (define %xdg-portal-config-source
-  (local-file "../../files/xdg-desktop-portal"
+  (local-file "../../../files/xdg-desktop-portal"
               "xdg-desktop-portal-config"
               #:recursive? #t))
 

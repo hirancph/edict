@@ -55,7 +55,7 @@
 ;; This means the config is managed by Guix Home — no manual symlinks.
 
 (define %caelestia-config-source
-  (local-file "../../files/quickshell"
+  (local-file "../../../files/quickshell"
               "caelestia-config"
               #:recursive? #t))
 
