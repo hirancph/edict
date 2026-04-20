@@ -59,6 +59,9 @@
                            (system* #$(file-append dbus "/bin/dbus-update-activation-environment")
                                     "DISPLAY")))
                        #t)
+                      ((>= n 60)   ;; 60 × 500ms = 30s timeout
+                       (display "wayland-compositor: timed out waiting for sockets\n")
+                       #f)
                       (else
                        (when (zero? (modulo n 120))
                          (display "wayland-compositor: still waiting for sockets...\n"))
