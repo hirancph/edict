@@ -16,6 +16,7 @@
   #:use-module (guix gexp)
   #:use-module (guix build-system cmake)
   #:use-module (gnu packages audio)
+  #:use-module (gnu packages algebra)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
@@ -80,7 +81,7 @@
                    "-DDISTRIBUTOR=\"edict local build\""
                    "-DDISTRIBUTOR_DEBUGINFO_AVAILABLE=NO"
                    "-DINSTALL_QMLDIR=lib/qt6/qml"
-                   "-DCRASH_REPORTER=OFF")
+                   "-DCRASH_HANDLER=OFF")
            #:phases
            #~(modify-phases %standard-phases
                (replace 'build (lambda _ (invoke "cmake" "--build" ".")))
@@ -128,17 +129,18 @@ version built from a local checkout.")
          "-DGIT_REVISION=local")))
     (native-inputs
      (list pkg-config
+           ninja
            qtshadertools))
     (inputs
      (list qtbase
            qtdeclarative
-           qtsvg
            libqalculate
            gmp
            mpfr
            pipewire
            aubio
-           libcava))
+           libcava
+           fftw))
     (home-page "https://github.com/caelestia-dots/shell")
     (synopsis "Caelestia QML plugin for Quickshell")
     (description
