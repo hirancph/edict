@@ -1,14 +1,17 @@
-# edict Makefile — Convenience targets for system management
+# edict Makefile — Fully declarative system management via guix time-machine
+#
+# All targets use `guix time-machine -C channels-lock.scm` so they
+# never depend on ~/.config/guix/ state.  This is the Guix equivalent
+# of Nix flakes with a lockfile.
 #
 # Usage:
-#   make pull       — Update Guix channels
+#   make lock       — Update channels and write channels-lock.scm
 #   make system     — Reconfigure the operating system (requires sudo)
 #   make home       — Reconfigure the home environment
 #   make deploy     — Reconfigure both system and home
 #   make gc         — Run garbage collection
 #   make check      — Lint and validate configuration
 #   make repl       — Start a Guile REPL with modules loaded
-#   make channels   — Deploy channels.scm to ~/.config/guix/
 
 GUIX_CONFIG_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 MODULES_DIR := $(GUIX_CONFIG_DIR)/modules
@@ -32,18 +35,26 @@ ARGS ?=
 
 export GUIX_PACKAGE_PATH := $(MODULES_DIR)
 
-.PHONY: pull system home deploy gc check repl channels \
+CHANNELS_LOCK := $(GUIX_CONFIG_DIR)/channels-lock.scm
+TIME_MACHINE  := guix time-machine -C $(CHANNELS_LOCK) --
+
+.PHONY: lock system home deploy gc check repl \
         quickshell-upstream-fetch quickshell-upstream-log \
         quickshell-upstream-diff quickshell-upstream-show \
         quickshell-upstream-bump
 
-## Pull latest channel updates
-pull:
-	guix pull -C $(GUIX_CONFIG_DIR)/channels.scm --cores=$(CORES) $(SUB_FLAG) $(ARGS)
+## Update channels and write pinned channels-lock.scm (handles bootstrap too)
+lock:
+	@mkdir -p $(HOME)/.config/guix
+	@test -e $(HOME)/.config/guix/channels.scm \
+		|| ln -sf $(GUIX_CONFIG_DIR)/channels.scm $(HOME)/.config/guix/channels.scm
+	guix pull -C $(GUIX_CONFIG_DIR)/channels.scm --cores=$(CORES) $(SUB_FLAG)
+	guix describe -f channels > $(CHANNELS_LOCK)
+	@echo "Wrote $(CHANNELS_LOCK)"
 
 ## Reconfigure the operating system
 system:
-	sudo -E guix system reconfigure \
+	sudo -E $(TIME_MACHINE) system reconfigure \
 		$(SUB_FLAG) \
 		--cores=$(CORES) \
 		--fallback \
@@ -52,7 +63,7 @@ system:
 
 ## Reconfigure the home environment
 home:
-	guix home reconfigure \
+	$(TIME_MACHINE) home reconfigure \
 		$(SUB_FLAG) \
 		--cores=$(CORES) \
 		--fallback \
@@ -64,19 +75,19 @@ deploy: system home
 
 ## Garbage collect old generations
 gc:
-	guix gc --delete-generations=30d
+	$(TIME_MACHINE) gc --delete-generations=30d
 
 ## Lint custom packages and validate system config
 check:
 	@echo "═══ Validating system config (dry-run) ═══"
-	guix system build \
+	$(TIME_MACHINE) system build \
 		$(SUB_FLAG) \
 		-L $(MODULES_DIR) \
 		--dry-run \
 		$(MODULES_DIR)/edict/systems/$(HOST).scm $(ARGS)
 	@echo ""
 	@echo "═══ Validating home config (dry-run) ═══"
-	guix home build \
+	$(TIME_MACHINE) home build \
 		$(SUB_FLAG) \
 		-L $(MODULES_DIR) \
 		--dry-run \
@@ -88,11 +99,7 @@ check:
 repl:
 	guile -L $(MODULES_DIR)
 
-## Deploy channels.scm to ~/.config/guix/
-channels:
-	@mkdir -p $(HOME)/.config/guix
-	@ln -sf $(GUIX_CONFIG_DIR)/channels.scm $(HOME)/.config/guix/channels.scm
-	@echo "Symlinked channels.scm → ~/.config/guix/channels.scm"
+
 
 
 # ═══════════════════════════════════════════════════════════════════
