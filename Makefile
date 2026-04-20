@@ -49,7 +49,7 @@ lock:
 	@test -e $(HOME)/.config/guix/channels.scm \
 		|| ln -sf $(GUIX_CONFIG_DIR)/channels.scm $(HOME)/.config/guix/channels.scm
 	guix pull -C $(GUIX_CONFIG_DIR)/channels.scm --cores=$(CORES) $(SUB_FLAG)
-	guix describe -f channels > $(CHANNELS_LOCK)
+	$(HOME)/.config/guix/current/bin/guix describe -f channels > $(CHANNELS_LOCK)
 	@echo "Wrote $(CHANNELS_LOCK)"
 
 ## Reconfigure the operating system
